@@ -1,0 +1,33 @@
+basyx:
+  cors:
+    allowed-origins:
+      - "https://*"
+    allowed-methods:
+      - "GET"
+      - "POST"
+      - "PATCH"
+      - "DELETE"
+      - "PUT"
+      - "OPTIONS"
+      - "HEAD"
+    allowed-headers:
+      - "Authorization"
+      - "Content-Type"
+      - "Accept"
+  feature:
+    authorization:
+      enabled: true
+      type: rbac
+      jwtBearerTokenProvider: keycloak
+      rbac:
+        file: file:/workspace/config/rbac_rules.json
+
+spring:
+  mongodb:
+    database: aas-registry
+    uri: mongodb://mongoAdmin:mongoPassword@mongodb:27017
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://keycloak:8080/auth/realms/basyx/protocol/openid-connect/certs

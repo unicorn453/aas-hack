@@ -1,0 +1,92 @@
+[
+  {
+    "role": "admin",
+    "action": ["CREATE", "READ", "UPDATE", "DELETE"],
+    "targetInformation": {
+      "@type": "concept-description",
+      "conceptDescriptionIds": "*"
+    }
+  },
+  {
+    "role": "admin",
+    "action": ["CREATE", "READ", "UPDATE", "DELETE"],
+    "targetInformation": {
+      "@type": "aas",
+      "aasIds": "*"
+    }
+  },
+  {
+    "role": "admin",
+    "action": ["CREATE", "READ", "UPDATE", "DELETE", "EXECUTE"],
+    "targetInformation": {
+      "@type": "submodel",
+      "submodelIds": "*",
+      "submodelElementIdShortPaths": "*"
+    }
+  },
+  {
+    "role": "basyx-reader-serialization",
+    "action": "READ",
+    "targetInformation": {
+      "@type": "aas-environment",
+      "aasIds": ["shell001", "shell002"],
+      "submodelIds": ["7A7104BDAB57E184", "AC69B1CB44F07935"],
+      "conceptDescriptionIds": ["0173-1#02-BAA120#008", "specificConceptDescriptionId"]
+    }
+  },
+  {
+    "role": "admin",
+    "action": ["CREATE", "READ", "UPDATE", "DELETE"],
+    "targetInformation": {
+      "@type": "aas-environment",
+      "aasIds": "*",
+      "submodelIds": "*",
+      "conceptDescriptionIds": "*"
+    }
+  },
+  {
+    "role": "basyx-reader-serialization-two",
+    "action": "READ",
+    "targetInformation": {
+      "@type": "aas-environment",
+      "aasIds": ["shell001", "shell002"],
+      "submodelIds": ["7A7104BDAB57E184"],
+      "conceptDescriptionIds": ["0173-1#02-BAA120#008"]
+    }
+  },
+  {
+    "role": "user",
+    "action": ["READ"],
+    "targetInformation": {
+      "@type": "concept-description",
+      "conceptDescriptionIds": "*"
+    }
+  },
+  {
+    "role": "user",
+    "action": ["READ"],
+    "targetInformation": {
+      "@type": "aas",
+      "aasIds": "*"
+    }
+  },
+  {
+    "role": "user",
+    "action": ["READ"],
+    "targetInformation": {
+      "@type": "submodel",
+      "submodelIds": "*",
+      "submodelElementIdShortPaths": "*"
+    }
+  },
+  {
+    "role": "user",
+    "action": ["READ"],
+    "targetInformation": {
+      "@type": "aas-environment",
+      "aasIds": "*",
+      "submodelIds": "*",
+      "conceptDescriptionIds": "*"
+    }
+  }
+ ]
