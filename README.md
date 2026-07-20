@@ -23,6 +23,6 @@ mkdir -p ./certs
 openssl req -x509 -newkey rsa:4096 -sha256 -days 3650 -nodes \
   -keyout ./certs/server.key \
   -out ./certs/server.crt \
-  -subj "/CN=192.168.56.76" \
-  -addext "subjectAltName=IP:192.168.56.76"
+  -subj "/CN=192.168.56.110" \
+  -addext "subjectAltName=IP:192.168.56.110"
 ```
