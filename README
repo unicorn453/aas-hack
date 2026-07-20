@@ -2,22 +2,23 @@
 
 This is a simple example of how to run the server and client in a docker container.
 
-```
+```bash
 docker compose up
 ```
-## open the ui: https://ip-address/
 
-## open the keycloak admin dashboard: https://ip-address/auth
+## Open the UI: https://ip-address/
 
-to stop and remove the container run:
+## Open the Keycloak admin dashboard: https://ip-address/auth
 
-```
+To stop and remove the container run:
+
+```bash
 docker compose down
 ```
 
+Create a `certs/` directory and `server.crt` + `server.key` with the following commands:
 
-Create a certs/ and sercer.crt + server.key with the following commands:
-```
+```bash
 mkdir -p ./certs
 openssl req -x509 -newkey rsa:4096 -sha256 -days 3650 -nodes \
   -keyout ./certs/server.key \
