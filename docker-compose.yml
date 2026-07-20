@@ -88,7 +88,7 @@ services:
     environment:
       - SERVER_PORT=8080
       - BASYX_CORS_ALLOWED_ORIGINS=https://*
-      # - BASYX_CORS_ALLOWED_ORIGINS=https://192.168.56.110
+      # - BASYX_CORS_ALLOWED_ORIGINS=https://${HOST_ADDRESS}
       - BASYX_CORS_ALLOWED_METHODS=GET,POST,PATCH,DELETE,PUT,OPTIONS,HEAD
       - BASYX_CORS_ALLOWED_HEADERS=Authorization,Content-Type,Accept
     volumes:
@@ -110,7 +110,7 @@ services:
     environment:
       - SERVER_PORT=8080
       - BASYX_CORS_ALLOWED_ORIGINS=https://*
-      # - BASYX_CORS_ALLOWED_ORIGINS=https://192.168.56.110
+      # - BASYX_CORS_ALLOWED_ORIGINS=https://${HOST_ADDRESS}
       - BASYX_CORS_ALLOWED_METHODS=GET,POST,PATCH,DELETE,PUT,OPTIONS,HEAD
       - BASYX_CORS_ALLOWED_HEADERS=Authorization,Content-Type,Accept
     restart: always
@@ -148,11 +148,11 @@ services:
       ALLOW_UPLOADING: "true"
       PRIMARY_LIGHT_COLOR: "#0cb2f0"
       PRIMARY_DARK_COLOR: "#f69222"
-      AAS_REGISTRY_PATH: "https://192.168.56.110/shell-descriptors"
-      SUBMODEL_REGISTRY_PATH: "https://192.168.56.110/submodel-descriptors"
-      AAS_REPO_PATH: "https://192.168.56.110/shells"
-      SUBMODEL_REPO_PATH: "https://192.168.56.110/submodels"
-      KEYCLOAK_URL: "https://192.168.56.110/auth"
+      AAS_REGISTRY_PATH: "https://${HOST_ADDRESS}/shell-descriptors"
+      SUBMODEL_REGISTRY_PATH: "https://${HOST_ADDRESS}/submodel-descriptors"
+      AAS_REPO_PATH: "https://${HOST_ADDRESS}/shells"
+      SUBMODEL_REPO_PATH: "https://${HOST_ADDRESS}/submodels"
+      KEYCLOAK_URL: "https://${HOST_ADDRESS}/auth"
       KEYCLOAK_REALM: "basyx"
       KEYCLOAK_CLIENT_ID: "basyx-web"
       KEYCLOAK_CLIENT_SECRET: "basyx-admin"

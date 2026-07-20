@@ -66,12 +66,12 @@
       "directAccessGrantsEnabled": true,
       "fullScopeAllowed": true,
       "redirectUris": [
-        "https://192.168.56.110/*",
-        "https://192.168.56.110:3000/*"
+        "https://192.168.56.76/*",
+        "https://192.168.56.76:3000/*"
       ],
       "webOrigins": [
-        "https://192.168.56.110",
-        "https://192.168.56.110:3000"
+        "https://192.168.56.76",
+        "https://192.168.56.76:3000"
       ],
       "defaultClientScopes": [
         "profile",
