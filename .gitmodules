@@ -1,3 +1,9 @@
-[submodule "excel-to-aasx"]
-	path = excel-to-aasx
-	url = git@github.com:pratik-adhikari/excel-to-aasx.git
+[submodule "excel-to-aasx/third_party/admin-shell-io/submodel-templates"]
+	path = excel-to-aasx/third_party/admin-shell-io/submodel-templates
+	url = https://github.com/admin-shell-io/submodel-templates
+[submodule "excel-to-aasx/third_party/aas-core-works/aas-core3.0-python"]
+	path = excel-to-aasx/third_party/aas-core-works/aas-core3.0-python
+	url = https://github.com/aas-core-works/aas-core3.0-python
+[submodule "excel-to-aasx/third_party/aas-core-works/aas-core-codegen"]
+	path = excel-to-aasx/third_party/aas-core-works/aas-core-codegen
+	url = https://github.com/aas-core-works/aas-core-codegen

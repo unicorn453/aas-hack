@@ -1,0 +1,37 @@
+{
+  "format": "idta-schunk-workbook",
+  "generationPolicy": {
+    "emptyActualValue": "skip",
+    "mandatoryMissingValue": "dummy",
+    "optionalEmptyTemplateBranches": "prune",
+    "reviewFiles": "always",
+    "logLevel": "detailed"
+  },
+  "sheets": [
+    {
+      "sheet": "Digital Nameplate",
+      "submodelIdShort": "Nameplate",
+      "template": "published/Digital nameplate/3/0/IDTA 02006-3-0_Template_Digital Nameplate.json"
+    },
+    {
+      "sheet": "Handover Documentation",
+      "submodelIdShort": "HandoverDocumentation",
+      "template": "published/Handover Documentation/2/0/IDTA 02004-2-0_Template_HandoverDocumentation.json"
+    },
+    {
+      "sheet": "Technical Data",
+      "submodelIdShort": "TechnicalData",
+      "template": "published/Technical_Data/2/0/IDTA 02003_Template_TechnicalData.json"
+    },
+    {
+      "sheet": "Carbon Footprint",
+      "submodelIdShort": "CarbonFootprint",
+      "template": "published/Carbon Footprint/1/0/IDTA 02023 _Template_CarbonFootprint.json"
+    },
+    {
+      "sheet": "Maintenance Instructions",
+      "submodelIdShort": "MaintenanceInstructions",
+      "template": "published/Maintenance Instructions/1/0/IDTA_02018_Template_MaintenanceInstructions.json"
+    }
+  ]
+}

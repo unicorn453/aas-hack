@@ -1,0 +1,9 @@
+[submodule "third_party/admin-shell-io/submodel-templates"]
+	path = third_party/admin-shell-io/submodel-templates
+	url = https://github.com/admin-shell-io/submodel-templates
+[submodule "third_party/aas-core-works/aas-core3.0-python"]
+	path = third_party/aas-core-works/aas-core3.0-python
+	url = https://github.com/aas-core-works/aas-core3.0-python
+[submodule "third_party/aas-core-works/aas-core-codegen"]
+	path = third_party/aas-core-works/aas-core-codegen
+	url = https://github.com/aas-core-works/aas-core-codegen

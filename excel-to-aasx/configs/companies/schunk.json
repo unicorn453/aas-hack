@@ -1,0 +1,19 @@
+{
+  "extends": "../formats/idta-schunk-workbook.json",
+  "company": "schunk",
+  "displayName": "Schunk",
+  "inputDir": "data/input/schunk",
+  "outputRoot": "data/generated/schunk",
+  "workbooks": [
+    "EGP 40-N-N-B.xlsx",
+    "EGU 50-IL-M-B.xlsx",
+    "PGN-plus-P 64-1.xlsx"
+  ],
+  "asset": {
+    "fallbackIdShort": "SchunkProduct",
+    "aasIdPrefix": "https://example.org/aas/schunk",
+    "submodelIdPrefix": "https://example.org/submodels/schunk",
+    "assetIdPrefix": "https://example.org/assets/schunk",
+    "assetType": "Schunk gripper"
+  }
+}

@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "excel-to-aasx"
+version = "0.1.0"
+description = "Auditable Excel-to-AASX generation pipeline"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "basyx-python-sdk>=2.0,<3",
+  "jsonschema>=4.23,<5",
+  "openpyxl>=3.1,<4",
+  "PyYAML>=6,<7",
+]
+
+[project.scripts]
+excel-to-aasx-extract = "excel_to_aasx.extract:main"
+excel-to-aasx-transform = "excel_to_aasx.transform:main"
+excel-to-aasx-validate = "excel_to_aasx.validate:main"
+excel-to-aasx-package = "excel_to_aasx.package:main"
+excel-to-aasx-collect = "excel_to_aasx.collect_extraction:main"
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8,<9",
+]
+
+[tool.setuptools.packages.find]
+include = ["excel_to_aasx*"]
