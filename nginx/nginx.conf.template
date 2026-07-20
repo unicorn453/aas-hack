@@ -1,0 +1,148 @@
+server {
+    listen 80;
+    server_name _;
+    return 301 https://__HOST_ADDRESS__$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    server_name _;
+
+    ssl_certificate     /etc/nginx/certs/server.crt;
+    ssl_certificate_key /etc/nginx/certs/server.key;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_ciphers         HIGH:!aNULL:!MD5;
+
+    # AAS Web UI (default)
+    location / {
+        proxy_pass         http://aas-web-ui:3000;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+    }
+
+    # AAS Registry
+    location /shell-descriptors {
+        proxy_pass         http://aas-registry:8080;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+    }
+
+    # Submodel Registry
+    location /submodel-descriptors {
+        proxy_pass         http://submodel-registry:8080;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+    }
+
+    # AAS Environment — shells
+    location /shells {
+        proxy_pass         http://aas-env:8081;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+    }
+
+    # AAS Environment — submodels
+    location /submodels {
+        proxy_pass         http://aas-env:8081;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+    }
+
+    # AAS Environment — concept descriptions
+    location /concept-descriptions {
+        proxy_pass         http://aas-env:8081;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+    }
+
+    # AAS Environment — file upload
+    location /upload {
+        proxy_pass              http://aas-env:8081;
+        proxy_set_header        Host              $host;
+        proxy_set_header        X-Real-IP         $remote_addr;
+        proxy_set_header        X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header        X-Forwarded-Proto $scheme;
+        client_max_body_size    500M;
+        proxy_read_timeout      300s;
+        proxy_send_timeout      300s;
+    }
+
+    # Keycloak over the same HTTPS port under /auth
+    location = /auth {
+        return 301 /auth/;
+    }
+
+    location /auth/ {
+        proxy_pass            http://keycloak:8080/auth/;
+        proxy_set_header      Host               $host;
+        proxy_set_header      X-Real-IP          $remote_addr;
+        proxy_set_header      X-Forwarded-For    $proxy_add_x_forwarded_for;
+        proxy_set_header      X-Forwarded-Proto  $scheme;
+        proxy_set_header      X-Forwarded-Port   443;
+        proxy_buffer_size     128k;
+        proxy_buffers         4 256k;
+        proxy_busy_buffers_size 256k;
+    }
+}
+
+server {
+    listen 8443 ssl;
+    server_name _;
+
+    ssl_certificate     /etc/nginx/certs/server.crt;
+    ssl_certificate_key /etc/nginx/certs/server.key;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_ciphers         HIGH:!aNULL:!MD5;
+
+    location = /realms/basyx/authorize {
+        return 301 /auth/realms/basyx/protocol/openid-connect/auth$is_args$args;
+    }
+
+    location /auth/ {
+        proxy_pass            http://keycloak:8080/auth/;
+        proxy_set_header      Host               $host;
+        proxy_set_header      X-Real-IP          $remote_addr;
+        proxy_set_header      X-Forwarded-For    $proxy_add_x_forwarded_for;
+        proxy_set_header      X-Forwarded-Proto  $scheme;
+        proxy_set_header      X-Forwarded-Port   8443;
+        proxy_buffer_size     128k;
+        proxy_buffers         4 256k;
+        proxy_busy_buffers_size 256k;
+    }
+
+    location /realms/ {
+        proxy_pass            http://keycloak:8080/auth/realms/;
+        proxy_set_header      Host               $host;
+        proxy_set_header      X-Real-IP          $remote_addr;
+        proxy_set_header      X-Forwarded-For    $proxy_add_x_forwarded_for;
+        proxy_set_header      X-Forwarded-Proto  $scheme;
+        proxy_set_header      X-Forwarded-Port   8443;
+        proxy_buffer_size     128k;
+        proxy_buffers         4 256k;
+        proxy_busy_buffers_size 256k;
+    }
+
+    location /resources/ {
+        proxy_pass            http://keycloak:8080/auth/resources/;
+        proxy_set_header      Host               $host;
+        proxy_set_header      X-Real-IP          $remote_addr;
+        proxy_set_header      X-Forwarded-For    $proxy_add_x_forwarded_for;
+        proxy_set_header      X-Forwarded-Proto  $scheme;
+        proxy_set_header      X-Forwarded-Port   8443;
+        proxy_buffer_size     128k;
+        proxy_buffers         4 256k;
+        proxy_busy_buffers_size 256k;
+    }
+}
