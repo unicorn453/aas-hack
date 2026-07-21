@@ -187,3 +187,13 @@ volumes:
   keycloak-db-data:
   keycloak-data:
 
+networks:
+  # Pinned subnet: Docker's default address pools include chunks of
+  # 192.168.0.0/16, which can collide with our team LAN (192.168.56.x).
+  # A colliding bridge network makes containers route LAN IPs internally,
+  # so requests to other stacks never leave the machine (nginx: 502).
+  default:
+    ipam:
+      config:
+        - subnet: 172.30.99.0/24
+
