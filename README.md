@@ -43,3 +43,9 @@ To stop and remove the container run:
 ```bash
 docker compose down
 ```
+
+## Python scripts (find / copy / cross-register shells)
+
+See [SCRIPTS.md](SCRIPTS.md) for the client scripts, including how
+cross-registry sharing works and why tokens must match the host being
+queried.
