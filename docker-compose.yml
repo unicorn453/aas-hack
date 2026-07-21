@@ -10,12 +10,13 @@ services:
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - ./certs:/etc/nginx/certs:ro
+    # no depends_on for keycloak: it only runs on the machine hosting the
+    # (team) keycloak, see the "keycloak" compose profile
     depends_on:
       - aas-web-ui
       - aas-registry
       - submodel-registry
       - aas-env
-      - keycloak
 
 
   mongodb:
@@ -38,6 +39,9 @@ services:
   keycloak-db:
     image: postgres:16
     container_name: keycloak-db
+    # only started on the machine hosting the (team) keycloak —
+    # setup_local_ip.py sets COMPOSE_PROFILES=keycloak in .env there
+    profiles: ["keycloak"]
     restart: always
     environment:
       POSTGRES_DB: keycloak
@@ -55,6 +59,7 @@ services:
   keycloak:
     image: quay.io/keycloak/keycloak:26.0
     container_name: keycloak
+    profiles: ["keycloak"]
     restart: always
     command: ["start-dev", "--import-realm"]
     environment:

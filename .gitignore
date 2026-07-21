@@ -12,3 +12,6 @@ nginx/nginx.conf
 basyx-infra.yml/basyx-infra.yml
 _files/aas-env.properties/application.properties
 _files/keycloak/realm-basyx.json
+# Generated from *.template by setup_local_ip.py (keycloak address baked in)
+_files/aas-registry.yml
+_files/sm-registry.yml

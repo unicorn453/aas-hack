@@ -44,6 +44,37 @@ To stop and remove the container run:
 docker compose down
 ```
 
+## Shared team Keycloak (single sign-on across stacks)
+
+By default every stack runs its own Keycloak — tokens are then only valid
+on the issuing stack, which is why cross-registered shells from a partner
+cannot be opened in your own web UI (401: wrong token issuer).
+
+To fix this, the whole team can share ONE Keycloak. One member hosts it,
+everyone else points their stack at it:
+
+```bash
+# the hosting member (e.g. 192.168.56.76) — default, nothing changes:
+python3 setup_local_ip.py
+
+# every other member:
+python3 setup_local_ip.py --keycloak-address 192.168.56.76
+docker compose up -d
+```
+
+On non-hosting machines the local keycloak + keycloak-db containers stay
+off (compose profile), and all token endpoints, JWT validation and the
+web UI login go to the shared Keycloak (plain HTTP port 8084 for the
+backend containers, proxied `/auth` for the browser). Tokens are then
+valid on every stack: cross-registered shells open in any web UI, and
+scripts need only one set of credentials.
+
+Note for the hosting member: the realm is only imported into Keycloak on
+first start. If your Keycloak volume predates this feature, allow all
+redirect URIs once (Keycloak admin console → realm `basyx` → client
+`basyx-web` → Valid redirect URIs `*`, Web origins `*`) or wipe the
+volume (`docker compose down -v`) and start fresh.
+
 ## Python scripts (find / copy / cross-register shells)
 
 See [SCRIPTS.md](SCRIPTS.md) for the client scripts, including how

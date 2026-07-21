@@ -11,9 +11,14 @@ Run this once after cloning, and again any time your IP changes (new day at the
 venue, different network, etc). Safe to rerun - it only touches generated files,
 never the .template sources.
 
+The stack can either run its own Keycloak (default) or use the Keycloak of
+another team member's stack, so the whole team shares one identity provider
+and tokens are valid on every stack:
+
 Usage:
     python3 setup_local_ip.py
     python3 setup_local_ip.py --ip 192.168.1.42   # override auto-detection
+    python3 setup_local_ip.py --keycloak-address 192.168.56.76   # use team Keycloak
 """
 
 import argparse
@@ -28,9 +33,15 @@ TEMPLATES = [
     REPO_ROOT / "basyx-infra.yml" / "basyx-infra.yml.template",
     REPO_ROOT / "_files" / "aas-env.properties" / "application.properties.template",
     REPO_ROOT / "_files" / "keycloak" / "realm-basyx.json.template",
+    REPO_ROOT / "_files" / "aas-registry.yml.template",
+    REPO_ROOT / "_files" / "sm-registry.yml.template",
 ]
 
 PLACEHOLDER = "__HOST_ADDRESS__"
+# Keycloak base URL as seen from inside the containers (token endpoints,
+# jwk-set-uri) and the upstream nginx proxies /auth to.
+KC_BASE_PLACEHOLDER = "__KEYCLOAK_BASE__"
+KC_UPSTREAM_PLACEHOLDER = "__KEYCLOAK_UPSTREAM__"
 
 
 def detect_local_ip():
@@ -44,19 +55,39 @@ def detect_local_ip():
         s.close()
 
 
-def write_env(ip):
+def write_env(ip, keycloak_address, hosts_keycloak):
     env_path = REPO_ROOT / ".env"
     lines = env_path.read_text().splitlines() if env_path.exists() else []
-    lines = [l for l in lines if not l.startswith("HOST_ADDRESS=")]
+    managed = ("HOST_ADDRESS=", "KEYCLOAK_ADDRESS=", "COMPOSE_PROFILES=")
+    lines = [l for l in lines if not l.startswith(managed)]
     lines.append(f"HOST_ADDRESS={ip}")
+    lines.append(f"KEYCLOAK_ADDRESS={keycloak_address}")
+    # The keycloak + keycloak-db containers only start on the machine that
+    # hosts the (team) Keycloak.
+    lines.append(f"COMPOSE_PROFILES={'keycloak' if hosts_keycloak else ''}")
     env_path.write_text("\n".join(lines) + "\n")
     print(f"[.env] HOST_ADDRESS={ip}")
+    print(f"[.env] KEYCLOAK_ADDRESS={keycloak_address}"
+          + ("" if hosts_keycloak else " (remote — own keycloak containers stay off)"))
 
 
-def render_templates(ip):
+def render_templates(ip, hosts_keycloak, keycloak_address):
+    if hosts_keycloak:
+        # Local Keycloak container, reachable via the compose network
+        kc_base = "http://keycloak:8080/auth"
+        kc_upstream = "keycloak:8080"
+    else:
+        # Team Keycloak on another machine, reachable via its published
+        # plain-HTTP port 8084 (avoids self-signed-cert issues in Java)
+        kc_base = f"http://{keycloak_address}:8084/auth"
+        kc_upstream = f"{keycloak_address}:8084"
+
     for template_path in TEMPLATES:
         output_path = template_path.with_suffix("")  # drop ".template"
-        content = template_path.read_text().replace(PLACEHOLDER, ip)
+        content = (template_path.read_text()
+                   .replace(PLACEHOLDER, ip)
+                   .replace(KC_BASE_PLACEHOLDER, kc_base)
+                   .replace(KC_UPSTREAM_PLACEHOLDER, kc_upstream))
         output_path.write_text(content)
         print(f"[render] {template_path.relative_to(REPO_ROOT)} -> {output_path.relative_to(REPO_ROOT)}")
 
@@ -101,13 +132,19 @@ def ensure_cert(ip):
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--ip", default=None, help="Use this IP instead of auto-detecting it")
+    parser.add_argument("--keycloak-address", default=None,
+                        help="IP of the team member hosting the shared Keycloak "
+                             "(default: this machine hosts its own Keycloak)")
     args = parser.parse_args()
 
     ip = args.ip or detect_local_ip()
+    keycloak_address = args.keycloak_address or ip
+    hosts_keycloak = keycloak_address == ip
     print(f"Using IP: {ip}")
+    print(f"Keycloak: {'own (this machine)' if hosts_keycloak else keycloak_address}")
 
-    write_env(ip)
-    render_templates(ip)
+    write_env(ip, keycloak_address, hosts_keycloak)
+    render_templates(ip, hosts_keycloak, keycloak_address)
     ensure_cert(ip)
 
     print("\nDone. Run `docker compose up -d` (or `podman compose up -d`) to start the stack.")
