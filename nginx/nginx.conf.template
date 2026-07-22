@@ -82,7 +82,7 @@ server {
     # Keycloak over the same HTTPS port under /auth
     # resolver = Docker's internal DNS; variable makes nginx resolve at request
     # time so the container can start even when keycloak profile is not active.
-    resolver 127.0.0.11 valid=30s;
+    resolver 172.30.99.1 valid=30s; # podman aardvark-dns (gateway of pinned subnet); 127.0.0.11 is docker-only
 
     location = /auth {
         return 301 /auth/;
@@ -116,7 +116,7 @@ server {
     ssl_protocols       TLSv1.2 TLSv1.3;
     ssl_ciphers         HIGH:!aNULL:!MD5;
 
-    resolver 127.0.0.11 valid=30s;
+    resolver 172.30.99.1 valid=30s; # podman aardvark-dns (gateway of pinned subnet); 127.0.0.11 is docker-only
 
     location = /realms/basyx/authorize {
         return 301 /auth/realms/basyx/protocol/openid-connect/auth$is_args$args;
