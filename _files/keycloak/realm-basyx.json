@@ -1,0 +1,128 @@
+{
+  "realm": "basyx",
+  "enabled": true,
+  "displayName": "BaSyx Realm",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "rememberMe": true,
+  "roles": {
+    "realm": [
+      {
+        "name": "admin",
+        "description": "BaSyx administrator",
+        "composite": true,
+        "composites": {
+          "realm": [
+            "user"
+          ]
+        }
+      },
+      {
+        "name": "user",
+        "description": "BaSyx user"
+      }
+    ]
+  },
+  "groups": [
+    {
+      "name": "admins",
+      "realmRoles": [
+        "admin"
+      ]
+    },
+    {
+      "name": "users",
+      "realmRoles": [
+        "user"
+      ]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "basyx-api",
+      "name": "BaSyx API",
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "basyx-api-secret",
+      "fullScopeAllowed": true,
+      "defaultClientScopes": [
+        "profile",
+        "email",
+        "roles"
+      ]
+    },
+    {
+      "clientId": "basyx-web",
+      "name": "BaSyx Web",
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "fullScopeAllowed": true,
+      "redirectUris": [
+        "https://192.168.56.76/*",
+        "https://192.168.56.76:3000/*"
+      ],
+      "webOrigins": [
+        "https://192.168.56.76",
+        "https://192.168.56.76:3000"
+      ],
+      "defaultClientScopes": [
+        "profile",
+        "email",
+        "roles"
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "basyx-admin",
+      "enabled": true,
+      "email": "basyx-admin@example.com",
+      "emailVerified": true,
+      "firstName": "BaSyx",
+      "lastName": "Admin",
+      "groups": [
+        "/admins"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "basyx-admin",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "admin",
+        "user"
+      ]
+    },
+    {
+      "username": "basyx-user",
+      "enabled": true,
+      "email": "basyx-user@example.com",
+      "emailVerified": true,
+      "firstName": "BaSyx",
+      "lastName": "User",
+      "groups": [
+        "/users"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "basyx-user",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "user"
+      ]
+    }
+  ]
+}
