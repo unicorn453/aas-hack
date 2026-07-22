@@ -189,6 +189,7 @@ services:
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: 1234mraf
+      MYSQL_DATABASE: keycloak
       MYSQL_USER: edci
       MYSQL_PASSWORD: 1234mraf
     volumes:
@@ -229,7 +230,7 @@ services:
         condition: service_healthy
 
   viewer:
-    image: kiceurope/viewer:QA
+    image: kiceurope/viewer:release-2.2.2-alpha
     container_name: viewer
     profiles: ["edci"]
     restart: always
@@ -251,7 +252,7 @@ services:
         condition: service_healthy
 
   wallet:
-    image: kiceurope/wallet:QA
+    image: kiceurope/wallet:release-2.2.2-alpha
     container_name: wallet
     profiles: ["edci"]
     restart: always
@@ -263,7 +264,7 @@ services:
       WAIT_FOR_PORT: "3306"
       WAIT_FOR_TIMEOUT: "60"
     volumes:
-      - ./edci/wallet:/usr/local/tomcat/conf/edci/wallet
+      - ./edci:/usr/local/tomcat/conf/edci
       - ./edci/wallet-logs:/usr/local/tomcat/logs
     ports:
       - "8181:8080"
@@ -273,7 +274,7 @@ services:
         condition: service_healthy
 
   issuer:
-    image: kiceurope/issuer:QA
+    image: kiceurope/issuer:release-2.2.2-alpha
     container_name: issuer
     profiles: ["edci"]
     restart: always
