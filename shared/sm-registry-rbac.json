@@ -1,0 +1,12 @@
+[
+  {
+    "role": "admin",
+    "action": ["CREATE", "READ", "UPDATE", "DELETE"],
+    "targetInformation": { "@type": "submodel-registry", "submodelIds": "*" }
+  },
+  {
+    "role": "user",
+    "action": "READ",
+    "targetInformation": { "@type": "submodel-registry", "submodelIds": "*" }
+  }
+]

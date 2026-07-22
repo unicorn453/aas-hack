@@ -1,0 +1,73 @@
+{
+  "realm": "basyx",
+  "enabled": true,
+  "displayName": "AAS Hack Network",
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "rememberMe": true,
+  "accessTokenLifespan": 1800,
+  "roles": {
+    "realm": [
+      {
+        "name": "admin",
+        "description": "Vollzugriff auf alle Server und Registries des Netzwerks",
+        "composite": true,
+        "composites": { "realm": ["user"] }
+      },
+      {
+        "name": "user",
+        "description": "Lesezugriff auf alle Server und Registries des Netzwerks"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "basyx-api",
+      "name": "BaSyx API (Skripte, Registry-Integration)",
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "basyx-api-secret",
+      "fullScopeAllowed": true,
+      "defaultClientScopes": ["profile", "email", "roles"]
+    },
+    {
+      "clientId": "basyx-web",
+      "name": "BaSyx Web UI",
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "fullScopeAllowed": true,
+      "redirectUris": ["*"],
+      "webOrigins": ["*"],
+      "defaultClientScopes": ["profile", "email", "roles"]
+    }
+  ],
+  "users": [
+    {
+      "username": "basyx-admin",
+      "enabled": true,
+      "email": "basyx-admin@example.com",
+      "emailVerified": true,
+      "firstName": "BaSyx",
+      "lastName": "Admin",
+      "credentials": [{ "type": "password", "value": "basyx-admin", "temporary": false }],
+      "realmRoles": ["admin"]
+    },
+    {
+      "username": "basyx-user",
+      "enabled": true,
+      "email": "basyx-user@example.com",
+      "emailVerified": true,
+      "firstName": "BaSyx",
+      "lastName": "User",
+      "credentials": [{ "type": "password", "value": "basyx-user", "temporary": false }],
+      "realmRoles": ["user"]
+    }
+  ]
+}

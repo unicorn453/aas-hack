@@ -1,0 +1,43 @@
+[
+  {
+    "role": "admin",
+    "action": ["CREATE", "READ", "UPDATE", "DELETE"],
+    "targetInformation": { "@type": "aas", "aasIds": "*" }
+  },
+  {
+    "role": "admin",
+    "action": ["CREATE", "READ", "UPDATE", "DELETE", "EXECUTE"],
+    "targetInformation": { "@type": "submodel", "submodelIds": "*", "submodelElementIdShortPaths": "*" }
+  },
+  {
+    "role": "admin",
+    "action": ["CREATE", "READ", "UPDATE", "DELETE"],
+    "targetInformation": { "@type": "concept-description", "conceptDescriptionIds": "*" }
+  },
+  {
+    "role": "admin",
+    "action": ["CREATE", "READ", "UPDATE", "DELETE"],
+    "targetInformation": { "@type": "aas-environment", "aasIds": "*", "submodelIds": "*", "conceptDescriptionIds": "*" }
+  },
+
+  {
+    "role": "user",
+    "action": "READ",
+    "targetInformation": { "@type": "aas", "aasIds": "*" }
+  },
+  {
+    "role": "user",
+    "action": "READ",
+    "targetInformation": { "@type": "submodel", "submodelIds": "*", "submodelElementIdShortPaths": "*" }
+  },
+  {
+    "role": "user",
+    "action": "READ",
+    "targetInformation": { "@type": "concept-description", "conceptDescriptionIds": "*" }
+  },
+  {
+    "role": "user",
+    "action": "READ",
+    "targetInformation": { "@type": "aas-environment", "aasIds": "*", "submodelIds": "*", "conceptDescriptionIds": "*" }
+  }
+]

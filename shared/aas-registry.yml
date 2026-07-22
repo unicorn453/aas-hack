@@ -1,7 +1,9 @@
+# Gemeinsame AAS-Registry — läuft nur auf dem Shared-Host, Keycloak und
+# MongoDB sind dort im selben Compose-Netz.
 basyx:
   cors:
     allowed-origins:
-      - "https://*"
+      - "*"
     allowed-methods:
       - "GET"
       - "POST"
@@ -24,10 +26,10 @@ basyx:
 
 spring:
   mongodb:
-    database: aas-registry
+    database: shared-aas-registry
     uri: mongodb://mongoAdmin:mongoPassword@mongodb:27017
   security:
     oauth2:
       resourceserver:
         jwt:
-          jwk-set-uri: __KEYCLOAK_BASE__/realms/basyx/protocol/openid-connect/certs
+          jwk-set-uri: http://keycloak:8080/auth/realms/basyx/protocol/openid-connect/certs

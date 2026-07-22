@@ -1,27 +1,44 @@
+name: aas-hack
+
+# Jede Maschine, die dieses Repo klont, wird Teil des AAS-Netzwerks:
+#
+#   1. python3 join.py [--shared <ip-des-shared-hosts>]
+#   2. docker compose up -d
+#
+# Profile (werden von join.py in .env gesetzt):
+#   node    – läuft auf JEDER Maschine: nginx (HTTPS) + AAS-Environment
+#             + Web UI + MongoDB
+#   shared  – läuft NUR auf dem Shared-Host: gemeinsames Keycloak +
+#             gemeinsame AAS-/Submodel-Registry
+#
+# Kommunikation:
+#   Browser  -> immer HTTPS über nginx (Port 443, selbstsigniertes Zertifikat)
+#   Container-> Shared-Dienste über deren LAN-HTTP-Ports (8082/8083/8084);
+#              nur Token-Signaturprüfung, daher unkritisch im Team-LAN
+
 services:
+  # ======================================================================
+  # NODE — auf jeder Maschine
+  # ======================================================================
   nginx:
     image: nginx:alpine
     container_name: proxy
+    profiles: ["node"]
     restart: always
     ports:
       - "80:80"
       - "443:443"
-      - "8443:8443"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - ./certs:/etc/nginx/certs:ro
-    # no depends_on for keycloak: it only runs on the machine hosting the
-    # (team) keycloak, see the "keycloak" compose profile
     depends_on:
       - aas-web-ui
-      - aas-registry
-      - submodel-registry
-      - aas-env
-
 
   mongodb:
     image: mongo:7.0
     container_name: mongodb
+    # node: Backend des eigenen aas-env; shared: Backend der Registries
+    profiles: ["node", "shared"]
     restart: always
     stop_grace_period: 60s
     environment:
@@ -36,164 +53,135 @@ services:
       retries: 3
       start_period: 20s
 
-  keycloak-db:
-    image: postgres:16
-    container_name: keycloak-db
-    # only started on the machine hosting the (team) keycloak —
-    # setup_local_ip.py sets COMPOSE_PROFILES=keycloak in .env there
-    profiles: ["keycloak"]
-    restart: always
-    environment:
-      POSTGRES_DB: keycloak
-      POSTGRES_USER: keycloak
-      POSTGRES_PASSWORD: keycloak
-    volumes:
-      - keycloak-db-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
-      interval: 10s
-      timeout: 5s
-      start_period: 20s
-      retries: 10
-
-  keycloak:
-    image: quay.io/keycloak/keycloak:26.0
-    container_name: keycloak
-    profiles: ["keycloak"]
-    restart: always
-    command: ["start-dev", "--import-realm"]
-    environment:
-      KC_DB: postgres
-      KC_DB_URL_HOST: keycloak-db
-      KC_DB_URL_PORT: 5432
-      KC_DB_URL_DATABASE: keycloak
-      KC_DB_USERNAME: keycloak
-      KC_DB_PASSWORD: keycloak
-      KC_BOOTSTRAP_ADMIN_USERNAME: admin
-      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
-      KC_HEALTH_ENABLED: "true"
-      KC_METRICS_ENABLED: "true"
-      KC_PROXY_HEADERS: xforwarded
-      KC_HOSTNAME_STRICT: "false"
-      KC_HTTP_RELATIVE_PATH: /auth
-    ports:
-      - "8084:8080"
-    volumes:
-      - keycloak-data:/opt/keycloak/data
-      - ./_files/keycloak/realm-basyx.json:/opt/keycloak/data/import/realm-basyx.json:ro
-    depends_on:
-      keycloak-db:
-        condition: service_healthy
-
-  aas-registry:
-    image: eclipsebasyx/aas-registry-log-mongodb:2.0.0-SNAPSHOT
-    container_name: aas-registry
-    ports:
-      - '8082:8080'
-    environment:
-      - SERVER_PORT=8080
-      - BASYX_CORS_ALLOWED_ORIGINS=https://*
-      # - BASYX_CORS_ALLOWED_ORIGINS=https://${HOST_ADDRESS}
-      - BASYX_CORS_ALLOWED_METHODS=GET,POST,PATCH,DELETE,PUT,OPTIONS,HEAD
-      - BASYX_CORS_ALLOWED_HEADERS=Authorization,Content-Type,Accept
-    volumes:
-      - ./_files/aas-registry.yml:/workspace/config/application.yml
-      - ./_files/rules/aas_registry_rbac_rules.json:/workspace/config/rbac_rules.json:ro
-    restart: always
-    depends_on:
-      mongodb:
-        condition: service_healthy
-
-  submodel-registry:
-    image: eclipsebasyx/submodel-registry-log-mem:2.0.0-SNAPSHOT
-    container_name: submodel-registry
-    volumes:
-      - ./_files/sm-registry.yml:/workspace/config/application.yml
-      - ./_files/rules/sm_registry_rbac_riles.json:/application/config/rbac_rules.json:ro
-    ports:
-      - '8083:8080'
-    environment:
-      - SERVER_PORT=8080
-      - BASYX_CORS_ALLOWED_ORIGINS=https://*
-      # - BASYX_CORS_ALLOWED_ORIGINS=https://${HOST_ADDRESS}
-      - BASYX_CORS_ALLOWED_METHODS=GET,POST,PATCH,DELETE,PUT,OPTIONS,HEAD
-      - BASYX_CORS_ALLOWED_HEADERS=Authorization,Content-Type,Accept
-    restart: always
-    depends_on:
-      mongodb:
-        condition: service_healthy
-
   aas-env:
     image: eclipsebasyx/aas-environment:2.0.0-SNAPSHOT
     container_name: aas-env
-    volumes:
-      - ./aas:/application/aas
-      - ./_files/aas-env.properties/application.properties:/application/application.properties
-      - ./_files/rules/aas_env_rbac_rules.json:/application/rbac_rules.json:ro
-    ports:
-      - '8081:8081'
+    profiles: ["node"]
+    restart: always
     environment:
-      - SERVER_PORT=8081
-      - JAVA_TOOL_OPTIONS=-Xms512m -Xmx1024m
+      JAVA_TOOL_OPTIONS: -Xms256m -Xmx1024m
+      # Diese Adresse landet in den Descriptoren der gemeinsamen Registry —
+      # darüber laden die Browser ALLER Partner unsere Daten (live).
+      BASYX_EXTERNALURL: https://${HOST_ADDRESS}
+      # Automatische An-/Abmeldung aller Shells/Submodels an der GEMEINSAMEN Registry
+      BASYX_AASREPOSITORY_FEATURE_REGISTRYINTEGRATION: ${AAS_REGISTRY_INTERNAL}
+      BASYX_SUBMODELREPOSITORY_FEATURE_REGISTRYINTEGRATION: ${SM_REGISTRY_INTERNAL}
+      BASYX_AASREPOSITORY_FEATURE_REGISTRYINTEGRATION_AUTHORIZATION_ENABLED: "true"
+      BASYX_AASREPOSITORY_FEATURE_REGISTRYINTEGRATION_AUTHORIZATION_TOKEN_ENDPOINT: ${KC_INTERNAL}/realms/basyx/protocol/openid-connect/token
+      BASYX_AASREPOSITORY_FEATURE_REGISTRYINTEGRATION_AUTHORIZATION_GRANT_TYPE: PASSWORD
+      BASYX_AASREPOSITORY_FEATURE_REGISTRYINTEGRATION_AUTHORIZATION_CLIENT_ID: basyx-api
+      BASYX_AASREPOSITORY_FEATURE_REGISTRYINTEGRATION_AUTHORIZATION_CLIENT_SECRET: basyx-api-secret
+      BASYX_AASREPOSITORY_FEATURE_REGISTRYINTEGRATION_AUTHORIZATION_USERNAME: basyx-admin
+      BASYX_AASREPOSITORY_FEATURE_REGISTRYINTEGRATION_AUTHORIZATION_PASSWORD: basyx-admin
+      BASYX_SUBMODELREPOSITORY_FEATURE_REGISTRYINTEGRATION_AUTHORIZATION_ENABLED: "true"
+      BASYX_SUBMODELREPOSITORY_FEATURE_REGISTRYINTEGRATION_AUTHORIZATION_TOKEN_ENDPOINT: ${KC_INTERNAL}/realms/basyx/protocol/openid-connect/token
+      BASYX_SUBMODELREPOSITORY_FEATURE_REGISTRYINTEGRATION_AUTHORIZATION_GRANT_TYPE: PASSWORD
+      BASYX_SUBMODELREPOSITORY_FEATURE_REGISTRYINTEGRATION_AUTHORIZATION_CLIENT_ID: basyx-api
+      BASYX_SUBMODELREPOSITORY_FEATURE_REGISTRYINTEGRATION_AUTHORIZATION_CLIENT_SECRET: basyx-api-secret
+      BASYX_SUBMODELREPOSITORY_FEATURE_REGISTRYINTEGRATION_AUTHORIZATION_USERNAME: basyx-admin
+      BASYX_SUBMODELREPOSITORY_FEATURE_REGISTRYINTEGRATION_AUTHORIZATION_PASSWORD: basyx-admin
+      # Token-Prüfung gegen das gemeinsame Keycloak (Signatur via JWKS)
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: ${KC_INTERNAL}/realms/basyx/protocol/openid-connect/certs
+    volumes:
+      - ./node/aas-env.properties:/application/application.properties:ro
+      - ./node/rbac_rules.json:/application/rbac_rules.json:ro
     depends_on:
       mongodb:
         condition: service_healthy
-      aas-registry:
-        condition: service_started
-      submodel-registry:
-        condition: service_started
 
   aas-web-ui:
     image: eclipsebasyx/aas-gui:SNAPSHOT
     container_name: aas-web-ui
-    ports:
-      - "3000:3000"
+    profiles: ["node"]
+    restart: always
     environment:
       ALLOW_EDITING: "true"
       ALLOW_UPLOADING: "true"
       PRIMARY_LIGHT_COLOR: "#0cb2f0"
       PRIMARY_DARK_COLOR: "#f69222"
-      AAS_REGISTRY_PATH: "https://${HOST_ADDRESS}/shell-descriptors"
-      SUBMODEL_REGISTRY_PATH: "https://${HOST_ADDRESS}/submodel-descriptors"
-      AAS_REPO_PATH: "https://${HOST_ADDRESS}/shells"
-      SUBMODEL_REPO_PATH: "https://${HOST_ADDRESS}/submodels"
-      KEYCLOAK_URL: "https://${HOST_ADDRESS}/auth"
-      KEYCLOAK_REALM: "basyx"
-      KEYCLOAK_CLIENT_ID: "basyx-web"
-      KEYCLOAK_CLIENT_SECRET: "basyx-admin"
-    volumes:
-      - ./basyx-infra.yml/basyx-infra.yml:/application/config/basyx-infra.yml:ro
-    restart: always
+      # Registry = GEMEINSAM (Shared-Host), Repository = EIGENER Server
+      AAS_REGISTRY_PATH: https://${SHARED_ADDRESS}/shell-descriptors
+      SUBMODEL_REGISTRY_PATH: https://${SHARED_ADDRESS}/submodel-descriptors
+      AAS_REPO_PATH: https://${HOST_ADDRESS}/shells
+      SUBMODEL_REPO_PATH: https://${HOST_ADDRESS}/submodels
+      CD_REPO_PATH: https://${HOST_ADDRESS}/concept-descriptions
+      KEYCLOAK_ACTIVE: "true"
+      KEYCLOAK_URL: https://${SHARED_ADDRESS}/auth
+      KEYCLOAK_REALM: basyx
+      KEYCLOAK_CLIENT_ID: basyx-web
     depends_on:
-      aas-env:
+      - aas-env
+
+  # ======================================================================
+  # SHARED — nur auf dem Shared-Host (genau EINE Maschine im Team)
+  # ======================================================================
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    container_name: keycloak
+    profiles: ["shared"]
+    restart: always
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HTTP_RELATIVE_PATH: /auth
+      KC_HOSTNAME_STRICT: "false"
+      KC_PROXY_HEADERS: xforwarded
+    ports:
+      # LAN-HTTP-Port für Container anderer Nodes (Token-Endpoint, JWKS);
+      # Browser gehen über https://<shared-ip>/auth (nginx)
+      - "8084:8080"
+    volumes:
+      - keycloak-data:/opt/keycloak/data
+      # Realm wird nur beim ERSTEN Start importiert; nach Änderungen:
+      # docker compose down -v (löscht auch Mongo-Daten!)
+      - ./shared/realm-basyx.json:/opt/keycloak/data/import/realm-basyx.json:ro
+
+  aas-registry:
+    image: eclipsebasyx/aas-registry-log-mongodb:2.0.0-SNAPSHOT
+    container_name: aas-registry
+    profiles: ["shared"]
+    restart: always
+    ports:
+      - "8082:8080"
+    environment:
+      SERVER_PORT: "8080"
+    volumes:
+      - ./shared/aas-registry.yml:/workspace/config/application.yml:ro
+      - ./shared/aas-registry-rbac.json:/workspace/config/rbac_rules.json:ro
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      keycloak:
         condition: service_started
 
-
-      
-    
-  # aas-repo:
-  #   image: eclipsebasyx/aas-repository:2.0.0-SNAPSHOT
-  #   container_name: aas-repo
-  #   volumes:
-  #     - ./_files/aas-repo.properties/application.properties:/application/application.properties
-  #     - ./_files/favicon.ico/favicon.ico:/application/static/favicon.ico
-  #   ports:
-  #     - '8082:8081'
-  #   networks:
-  #     - basyx_net
+  submodel-registry:
+    image: eclipsebasyx/submodel-registry-log-mongodb:2.0.0-SNAPSHOT
+    container_name: submodel-registry
+    profiles: ["shared"]
+    restart: always
+    ports:
+      - "8083:8080"
+    environment:
+      SERVER_PORT: "8080"
+    volumes:
+      - ./shared/sm-registry.yml:/workspace/config/application.yml:ro
+      - ./shared/sm-registry-rbac.json:/workspace/config/rbac_rules.json:ro
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
 
 volumes:
   mongodb-data:
-  keycloak-db-data:
   keycloak-data:
 
 networks:
-  # Pinned subnet: Docker's default address pools include chunks of
-  # 192.168.0.0/16, which can collide with our team LAN (192.168.56.x).
-  # A colliding bridge network makes containers route LAN IPs internally,
-  # so requests to other stacks never leave the machine (nginx: 502).
+  # Pinned: Docker/Podman-Default-Pools können mit dem Team-LAN (192.168.x)
+  # kollidieren — dann routen Container LAN-IPs intern und Partner sind
+  # unerreichbar (502).
   default:
     ipam:
       config:
         - subnet: 172.30.99.0/24
-

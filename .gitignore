@@ -1,17 +1,10 @@
-certs/
+# Von join.py generiert — enthält die IP dieser Maschine
 .env
-.venv-scripts/
-downloaded_shells/
-parser/.venv/
+nginx/nginx.conf
+certs/
+
 __pycache__/
 *.egg-info/
-
-# Generated from *.template by setup_local_ip.py - contains this machine's IP,
-# not meant to be committed. Edit the .template file instead.
-nginx/nginx.conf
-basyx-infra.yml/basyx-infra.yml
-_files/aas-env.properties/application.properties
-_files/keycloak/realm-basyx.json
-# Generated from *.template by setup_local_ip.py (keycloak address baked in)
-_files/aas-registry.yml
-_files/sm-registry.yml
+parser/.venv/
+.venv*/
+.DS_Store
