@@ -10,12 +10,13 @@ services:
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - ./certs:/etc/nginx/certs:ro
+    # no depends_on for keycloak: it only runs on the machine hosting the
+    # (team) keycloak, see the "keycloak" compose profile
     depends_on:
       - aas-web-ui
       - aas-registry
       - submodel-registry
       - aas-env
-      - keycloak
 
 
   mongodb:
@@ -38,6 +39,9 @@ services:
   keycloak-db:
     image: postgres:16
     container_name: keycloak-db
+    # only started on the machine hosting the (team) keycloak —
+    # setup_local_ip.py sets COMPOSE_PROFILES=keycloak in .env there
+    profiles: ["keycloak"]
     restart: always
     environment:
       POSTGRES_DB: keycloak
@@ -55,6 +59,7 @@ services:
   keycloak:
     image: quay.io/keycloak/keycloak:26.0
     container_name: keycloak
+    profiles: ["keycloak"]
     restart: always
     command: ["start-dev", "--import-realm"]
     environment:
@@ -177,8 +182,132 @@ services:
   #   networks:
   #     - basyx_net
 
+  # ── EDCI services ─────────────────────────────────────────────────────────
+  mysqldb:
+    image: kiceurope/mysqldb:latest
+    container_name: mysqldb
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 1234mraf
+      MYSQL_USER: edci
+      MYSQL_PASSWORD: 1234mraf
+    volumes:
+      - mysqldb-data:/var/lib/mysql
+    ports:
+      - "3307:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # Separate Keycloak instance for EDCI — runs on port 9000 to avoid
+  # collision with the BaSyx keycloak on port 8084.
+  keycloak-edci:
+    image: quay.io/keycloak/keycloak:latest
+    container_name: keycloak-edci
+    profiles: ["edci"]
+    restart: always
+    command:
+      - start-dev
+      - --import-realm
+      - --features=token-exchange,admin-fine-grained-authz
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB: mysql
+      KC_DB_URL_HOST: mysqldb
+      KC_DB_URL_PORT: 3306
+      KC_DB_URL_DATABASE: keycloak
+      KC_DB_USERNAME: edci
+      KC_DB_PASSWORD: 1234mraf
+    ports:
+      - "9000:8080"
+    depends_on:
+      mysqldb:
+        condition: service_healthy
+
+  viewer:
+    image: kiceurope/viewer:QA
+    container_name: viewer
+    profiles: ["edci"]
+    restart: always
+    environment:
+      JPDA_ENABLED: "true"
+      JPDA_TRANSPORT: dt_socket
+      JPDA_ADDRESS: "8000"
+      WAIT_FOR_HOST: mysqldb
+      WAIT_FOR_PORT: "3306"
+      WAIT_FOR_TIMEOUT: "60"
+    volumes:
+      - ./edci/viewer:/usr/local/tomcat/conf/edci/viewer
+      - ./edci/viewer-logs:/usr/local/tomcat/logs
+    ports:
+      - "8282:8080"
+      - "9282:8000"
+    depends_on:
+      mysqldb:
+        condition: service_healthy
+
+  wallet:
+    image: kiceurope/wallet:QA
+    container_name: wallet
+    profiles: ["edci"]
+    restart: always
+    environment:
+      JPDA_ENABLED: "true"
+      JPDA_TRANSPORT: dt_socket
+      JPDA_ADDRESS: "8000"
+      WAIT_FOR_HOST: mysqldb
+      WAIT_FOR_PORT: "3306"
+      WAIT_FOR_TIMEOUT: "60"
+    volumes:
+      - ./edci/wallet:/usr/local/tomcat/conf/edci/wallet
+      - ./edci/wallet-logs:/usr/local/tomcat/logs
+    ports:
+      - "8181:8080"
+      - "9181:8000"
+    depends_on:
+      mysqldb:
+        condition: service_healthy
+
+  issuer:
+    image: kiceurope/issuer:QA
+    container_name: issuer
+    profiles: ["edci"]
+    restart: always
+    environment:
+      JPDA_ENABLED: "true"
+      JPDA_TRANSPORT: dt_socket
+      JPDA_ADDRESS: "8000"
+      WAIT_FOR_HOST: mysqldb
+      WAIT_FOR_PORT: "3306"
+      WAIT_FOR_TIMEOUT: "60"
+    volumes:
+      - ./edci/issuer:/usr/local/tomcat/conf/edci/issuer
+      - ./edci/issuer-credentials:/usr/local/tomcat/temp/credentials
+      - ./edci/issuer-logs:/usr/local/tomcat/logs
+    ports:
+      - "8383:8080"
+      - "9383:8000"
+    depends_on:
+      mysqldb:
+        condition: service_healthy
+
 volumes:
   mongodb-data:
   keycloak-db-data:
   keycloak-data:
+  mysqldb-data:
+
+networks:
+  # Pinned subnet: Docker's default address pools include chunks of
+  # 192.168.0.0/16, which can collide with our team LAN (192.168.56.x).
+  # A colliding bridge network makes containers route LAN IPs internally,
+  # so requests to other stacks never leave the machine (nginx: 502).
+  default:
+    ipam:
+      config:
+        - subnet: 172.30.99.0/24
 
