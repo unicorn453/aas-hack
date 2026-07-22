@@ -32,7 +32,7 @@ docker compose up -d
 **Alle anderen** (IP des Shared-Hosts einsetzen):
 
 ```bash
-python3 join.py --shared 192.168.56.10
+python3 join.py --shared 192.168.56.76
 docker compose up -d
 ```
 
