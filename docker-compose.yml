@@ -39,9 +39,8 @@ services:
   keycloak-db:
     image: postgres:16
     container_name: keycloak-db
-    # only started on the machine hosting the (team) keycloak —
-    # setup_local_ip.py sets COMPOSE_PROFILES=keycloak in .env there
-    profiles: ["keycloak"]
+    # No profile: all configs on this branch point at the local
+    # "keycloak" container, so it must start on every machine.
     restart: always
     environment:
       POSTGRES_DB: keycloak
@@ -59,7 +58,6 @@ services:
   keycloak:
     image: quay.io/keycloak/keycloak:26.0
     container_name: keycloak
-    profiles: ["keycloak"]
     restart: always
     command: ["start-dev", "--import-realm"]
     environment:
@@ -186,6 +184,8 @@ services:
   mysqldb:
     image: kiceurope/mysqldb:latest
     container_name: mysqldb
+    # Only needed by the EDCI services — don't start it for plain BaSyx use
+    profiles: ["edci"]
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: 1234mraf

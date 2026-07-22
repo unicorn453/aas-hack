@@ -17,6 +17,7 @@ Usage:
 """
 
 import argparse
+import shutil
 import socket
 import subprocess
 from pathlib import Path
@@ -56,6 +57,12 @@ def write_env(ip):
 def render_templates(ip):
     for template_path in TEMPLATES:
         output_path = template_path.with_suffix("")  # drop ".template"
+        # If `docker compose up` ran before this script, Docker auto-created
+        # the missing bind-mount source as an empty DIRECTORY - remove it,
+        # otherwise write_text() fails with IsADirectoryError forever.
+        if output_path.is_dir():
+            shutil.rmtree(output_path)
+            print(f"[render] removed stray directory {output_path.relative_to(REPO_ROOT)} (created by docker)")
         content = template_path.read_text().replace(PLACEHOLDER, ip)
         output_path.write_text(content)
         print(f"[render] {template_path.relative_to(REPO_ROOT)} -> {output_path.relative_to(REPO_ROOT)}")

@@ -219,9 +219,10 @@ def download_shell(aas_env_url, token, aas_id):
 
 
 def submodel_ids_of(shell: dict) -> list:
-    return [ref["keys"][0]["value"]
+    return [key["value"]
             for ref in shell.get("submodels", [])
-            if ref.get("keys")]
+            for key in ref.get("keys", [])
+            if key.get("type") == "Submodel"]
 
 
 # ---------------------------------------------------------------------------
@@ -339,12 +340,13 @@ def main():
     my_keycloak_url = (args.my_keycloak_url or f"{my_url}/auth").rstrip("/")
     partner_keycloak_url = (args.partner_keycloak_url or f"{partner_url}/auth").rstrip("/")
 
-    # BaSyx default paths
-    my_registry_url      = f"{my_url}/shell-descriptors"
-    my_sm_registry_url   = f"{my_url}/submodel-descriptors"
-    my_aas_env_url       = f"{my_url}/shells"
-    partner_registry_url = f"{partner_url}/shell-descriptors"
-    partner_sm_registry_url = f"{partner_url}/submodel-descriptors"
+    # Base URLs only — every helper function appends its own API path
+    # (e.g. /shell-descriptors), so appending it here would double it.
+    my_registry_url      = my_url
+    my_sm_registry_url   = my_url
+    my_aas_env_url       = my_url
+    partner_registry_url = partner_url
+    partner_sm_registry_url = partner_url
 
     print(f"Authenticating against own Keycloak  ({my_keycloak_url}) …")
     my_token = get_token(my_keycloak_url, args.my_realm, args.my_client_id,
