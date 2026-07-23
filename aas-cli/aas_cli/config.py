@@ -18,6 +18,7 @@ class KeycloakConfig:
     realm: str = "basyx"
     client_id: str = "basyx-api"
     client_secret: Optional[str] = None
+    grant_type: str = "password"
 
     @property
     def token_endpoint(self) -> str:
@@ -86,6 +87,7 @@ def load_servers(config_path: Optional[str] = None) -> dict[str, ServerConfig]:
                 realm=kc_raw.get("realm", "basyx"),
                 client_id=kc_raw.get("client_id", "basyx-api"),
                 client_secret=kc_raw.get("client_secret"),
+                grant_type=kc_raw.get("grant_type", "password"),
             )
         servers[name] = ServerConfig(
             name=name,

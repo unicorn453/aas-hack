@@ -22,23 +22,25 @@ def get_token(server: ServerConfig) -> Optional[str]:
     if server.keycloak is None:
         return None
 
-    cache_key = f"{server.keycloak.token_endpoint}:{server.username}"
+    grant_type = server.keycloak.grant_type
+    cache_key = f"{server.keycloak.token_endpoint}:{grant_type}:{server.username}"
     cached = _token_cache.get(cache_key)
     if cached and cached[1] > time.time() + 5:
         return cached[0]
 
-    password = server.resolved_password()
-    if password is None:
-        password = getpass.getpass(f"Password for {server.username}@{server.name}: ")
-
     data = {
-        "grant_type": "password",
+        "grant_type": grant_type,
         "client_id": server.keycloak.client_id,
-        "username": server.username,
-        "password": password,
     }
     if server.keycloak.client_secret:
         data["client_secret"] = server.keycloak.client_secret
+
+    if grant_type == "password":
+        password = server.resolved_password()
+        if password is None:
+            password = getpass.getpass(f"Password for {server.username}@{server.name}: ")
+        data["username"] = server.username
+        data["password"] = password
 
     response = requests.post(
         server.keycloak.token_endpoint,
