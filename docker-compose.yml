@@ -199,6 +199,8 @@ services:
       timeout: 5s
       start_period: 20s
       retries: 10
+    networks:
+      - edc-network
 
   vault:
     image: hashicorp/vault:1.16
@@ -211,40 +213,84 @@ services:
       VAULT_DEV_ROOT_TOKEN_ID: root
       VAULT_DEV_LISTEN_ADDRESS: 0.0.0.0:8200
     command: server -dev
+    healthcheck:
+      test: ["CMD", "vault", "status", "-address=http://127.0.0.1:8200"]
+      interval: 10s
+      timeout: 5s
+      start_period: 15s
+      retries: 10
+    networks:
+      - edc-network
 
   edc-controlplane:
-    image: tractusx/edc-controlplane-postgresql-hashicorp-vault:<release-tag>
-
+    image: tractusx/edc-controlplane-postgresql-hashicorp-vault:latest
     container_name: edc-controlplane
-
+    restart: always
     depends_on:
-      - postgres
-      - vault
-
+      postgres:
+        condition: service_healthy
+      vault:
+        condition: service_healthy
+      edc-dataplane:
+        condition: service_started
     ports:
-
-      - "19191:19191"   # DSP
-
-      - "19193:19193"   # Management API
-
+      - "19191:19191"
+      - "19193:19193"
     environment:
-
-      WEB_HTTP_MANAGEMENT_AUTH_KEY: password
-
-      WEB_HTTP_MANAGEMENT_PORT: 19193
-
+      WEB_HTTP_PROTOCOL_HOST: 0.0.0.0
       WEB_HTTP_PROTOCOL_PORT: 19191
+      WEB_HTTP_PROTOCOL_PATH: /api/dsp
+      WEB_HTTP_MANAGEMENT_HOST: 0.0.0.0
+      WEB_HTTP_MANAGEMENT_PORT: 19193
+      WEB_HTTP_MANAGEMENT_PATH: /api/management
+      WEB_HTTP_MANAGEMENT_AUTH_KEY: password
+      EDC_DSP_CALLBACK_ADDRESS: https://${HOST_ADDRESS}:19191/api/dsp
+      EDC_DATAPLANE_API_PUBLIC_BASEURL: https://${HOST_ADDRESS}:19291/api/public
+      EDC_VAULT_HASHICORP_URL: http://vault:8200
+      EDC_VAULT_HASHICORP_TOKEN: root
+      EDC_DATASOURCE_DEFAULT_URL: jdbc:postgresql://postgres:5432/edc
+      EDC_DATASOURCE_DEFAULT_USER: edc
+      EDC_DATASOURCE_DEFAULT_PASSWORD: edc
+      EDC_PARTICIPANT_ID: did:web:${HOST_ADDRESS}
+      EDC_PARTICIPANT_CONTEXT_ID: 226d238b-4b27-4936-9fc4-1664504784aa
+
+      TRACTUSX_EDC_PARTICIPANT_BPN: BPNL000000000001
+
+      EDC_IAM_STS_OAUTH_TOKEN_URL: https://${HOST_ADDRESS}/auth/realms/edc/protocol/openid-connect/token
+
+      EDC_IAM_STS_OAUTH_CLIENT_ID: edc-client
+
+      EDC_IAM_STS_OAUTH_CLIENT_SECRET_ALIAS: edc-oauth-secret
+
+      TX_EDC_IAM_DCP_BDRS_SERVER_URL: https://${HOST_ADDRESS}:8443
+    networks:
+      - edc-network
 
   edc-dataplane:
-    image: tractusx/edc-dataplane-hashicorp-vault:<matching-release-tag>
+    image: tractusx/edc-dataplane-hashicorp-vault:latest
     container_name: edc-dataplane
+    restart: always
     depends_on:
-      - vault
+      vault:
+        condition: service_healthy
+    networks:
+      - edc-network
     ports:
       - "19291:19291"
+    environment:
+      WEB_HTTP_PUBLIC_HOST: 0.0.0.0
+      WEB_HTTP_PUBLIC_PORT: 19291
+      WEB_HTTP_PUBLIC_PATH: /api/public
+      EDC_DATAPLANE_API_PUBLIC_BASEURL: https://${HOST_ADDRESS}:19291/api/public
+      EDC_VAULT_HASHICORP_URL: http://vault:8200
+      EDC_VAULT_HASHICORP_TOKEN: root
 
 
 volumes:
   mongodb-data:
+  postgres-data:
   keycloak-db-data:
   keycloak-data:
+
+networks:
+  edc-network:

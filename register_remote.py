@@ -41,6 +41,8 @@ Example (hackathon defaults — replace IPs):
 import argparse
 import base64
 import json
+import os
+from pathlib import Path
 
 import requests
 import urllib3
@@ -48,6 +50,22 @@ import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 TIMEOUT = 10
+
+
+def _default_my_url() -> str:
+    host_address = os.getenv("HOST_ADDRESS")
+    if host_address:
+        return f"https://{host_address}"
+
+    env_path = Path(__file__).resolve().parent / ".env"
+    if env_path.exists():
+        for line in env_path.read_text().splitlines():
+            if line.startswith("HOST_ADDRESS="):
+                value = line.split("=", 1)[1].strip()
+                if value:
+                    return f"https://{value}"
+
+    return "https://127.0.0.1"
 
 
 # ---------------------------------------------------------------------------
@@ -305,7 +323,7 @@ def main():
     )
 
     # --- own stack ---
-    parser.add_argument("--my-url", default="https://192.168.56.76",
+    parser.add_argument("--my-url", default=_default_my_url(),
                         help="Base URL of YOUR stack (used to filter own shells and reach your env/registries)")
     parser.add_argument("--my-keycloak-url", default=None,
                         help="Keycloak URL for YOUR stack (default: <my-url>/auth)")
@@ -339,12 +357,12 @@ def main():
     my_keycloak_url = (args.my_keycloak_url or f"{my_url}/auth").rstrip("/")
     partner_keycloak_url = (args.partner_keycloak_url or f"{partner_url}/auth").rstrip("/")
 
-    # BaSyx default paths
-    my_registry_url      = f"{my_url}/shell-descriptors"
-    my_sm_registry_url   = f"{my_url}/submodel-descriptors"
-    my_aas_env_url       = f"{my_url}/shells"
-    partner_registry_url = f"{partner_url}/shell-descriptors"
-    partner_sm_registry_url = f"{partner_url}/submodel-descriptors"
+    # Registry functions append their own paths (/shell-descriptors, /shells, etc.)
+    my_registry_url      = my_url
+    my_sm_registry_url   = my_url
+    my_aas_env_url       = my_url
+    partner_registry_url = partner_url
+    partner_sm_registry_url = partner_url
 
     print(f"Authenticating against own Keycloak  ({my_keycloak_url}) …")
     my_token = get_token(my_keycloak_url, args.my_realm, args.my_client_id,
