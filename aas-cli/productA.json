@@ -1,0 +1,50 @@
+{
+  "assetAdministrationShells" : [ {
+    "modelType" : "AssetAdministrationShell",
+    "assetInformation" : {
+      "assetKind" : "Type",
+      "assetType" : "Type",
+      "globalAssetId" : "https://admin-shell.io/idta/asset/ProductA/1/0"
+    },
+    "derivedFrom" : {
+      "keys" : [ {
+        "type" : "AssetAdministrationShell",
+        "value" : "https://admin-shell.io/idta/aas/TechnicalData/2/0"
+      } ],
+      "type" : "ModelReference"
+    },
+    "submodels" : [ {
+      "keys" : [ {
+        "type" : "Submodel",
+        "value" : "/aasProductA/TechnicalData/2/0"
+      } ],
+      "type" : "ModelReference"
+    }, {
+      "keys" : [ {
+        "type" : "Submodel",
+        "value" : "/aasProductA/MaintenanceInstructions/1/0"
+      } ],
+      "type" : "ModelReference"
+    }, {
+      "keys" : [ {
+        "type" : "Submodel",
+        "value" : "/aasProductA/HandoverDocumentation/2/0"
+      } ],
+      "type" : "ModelReference"
+    }, {
+      "keys" : [ {
+        "type" : "Submodel",
+        "value" : "/aasProductA/CarbonFootprint/1/0"
+      } ],
+      "type" : "ModelReference"
+    }, {
+      "keys" : [ {
+        "type" : "Submodel",
+        "value" : "/aasProductA/DigitalNameplate/3/0"
+      } ],
+      "type" : "ModelReference"
+    } ],
+    "id" : "https://admin-shell.io/idta/aas/ProductA/1/0",
+    "idShort" : "ProductA"
+  } ]
+}
