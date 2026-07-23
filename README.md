@@ -32,7 +32,7 @@ docker compose up -d
 **Everyone else** (use the shared host's IP):
 
 ```bash
-python3 join.py --shared 192.168.56.76
+python3 join.py --shared 192.168.56.219
 docker compose up -d
 ```
 
