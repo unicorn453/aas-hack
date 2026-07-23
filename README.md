@@ -1,112 +1,115 @@
-# AAS Hack — Team-Netzwerk
+# AAS Hack — Team Network
 
-Jede Maschine, die dieses Repo klont, wird Teil des AAS-Netzwerks:
-eigener BaSyx-Server (HTTPS) + Web UI, verbunden über **eine gemeinsame
-Registry** und **ein gemeinsames Keycloak** auf dem Shared-Host. Alle sehen
-alle Shells; die Daten bleiben live auf dem Server des Besitzers.
+Every machine that clones this repo becomes part of the AAS network:
+its own BaSyx server (HTTPS) + web UI, connected via **one shared
+registry** and **one shared Keycloak** on the shared host. Everyone sees
+everyone's shells; the data stays live on the owner's server.
 
 ```
-                 SHARED-HOST (genau einer im Team)
+                 SHARED HOST (exactly one per team)
                  ┌────────────────────────────────────┐
-                 │ Keycloak     AAS-Registry  SM-Reg. │
-                 │ (ein Login)  (gemeinsames Telefonbuch) │
-                 │        + normaler Node             │
+                 │ Keycloak     AAS Registry  SM Reg.  │
+                 │ (one login)  (shared phone book)    │
+                 │        + normal node                │
                  └───▲──────────────▲─────────────────┘
-        Token / HTTPS│              │ auto-registriert
+        Token / HTTPS│              │ auto-registered
         ┌────────────┴──┐        ┌──┴────────────┐
-        │ NODE Person 2 │◄─────► │ NODE Person 3 │   ... beliebig viele
-        │ nginx :443    │  liest │ nginx :443    │
+        │ NODE Person 2 │◄─────► │ NODE Person 3 │   ... as many as you like
+        │ nginx :443    │  reads │ nginx :443    │
         │ env + web-ui  │  live  │ env + web-ui  │
         └───────────────┘        └───────────────┘
 ```
 
-## Mitmachen (2 Kommandos)
+## Joining (2 commands)
 
-**Der Shared-Host** (genau eine Person, zuerst starten):
+**The shared host** (exactly one person, start this first):
 
 ```bash
 python3 join.py
 docker compose up -d
 ```
 
-**Alle anderen** (IP des Shared-Hosts einsetzen):
+**Everyone else** (use the shared host's IP):
 
 ```bash
 python3 join.py --shared 192.168.56.76
 docker compose up -d
 ```
 
-Danach: `https://<eigene-ip>/` öffnen (Zertifikatswarnung akzeptieren —
-selbstsigniert) und mit `basyx-admin` / `basyx-admin` einloggen.
+Then open `https://<your-own-ip>/` (accept the certificate warning —
+self-signed) and log in with `basyx-admin` / `basyx-admin`.
 
-Bei IP-Wechsel (neuer Tag, anderes Netz): `join.py` erneut ausführen und
-`docker compose up -d` (startet die geänderten Container neu).
+If your IP changes (new day, different network): run `join.py` again and
+`docker compose up -d` (restarts the changed containers).
 
-## Wie es funktioniert
+## How it works
 
-- **Eigene Shells hochladen:** Web UI → Upload (AASX/JSON/XML). Der eigene
-  Server meldet jede Shell **automatisch** in der gemeinsamen Registry an
-  (BaSyx Registry-Integration) — kein Skript, kein Cross-Registrieren.
-- **Shells der anderen sehen:** Die Web UI liest die gemeinsame Registry,
-  bekommt die HTTPS-Adresse des Besitzers und lädt die Daten dort live.
-- **Ein Login überall:** Alle Server prüfen Tokens desselben Keycloak
-  (Shared-Host). Das alte Problem „fremde Shells geben 401, weil jeder
-  Stack sein eigenes Keycloak hat" ist damit weg.
-- **Produkt aus Fremdteilen:** Ein neues Shell referenziert Submodels der
-  Partner einfach per ID (ModelReference) — die Registry löst auf, die
-  Daten bleiben beim Partner. Fertige Skripte dafür gibt es im
-  Schwester-Repo `aas-federation` (`tools/compose_product.py`).
+- **Uploading your own shells:** Web UI → Upload (AASX/JSON/XML). Your own
+  server registers every shell **automatically** in the shared registry
+  (BaSyx registry integration) — no script, no cross-registration needed.
+- **Seeing others' shells:** The web UI reads the shared registry, gets
+  the owner's HTTPS address, and loads the data from there live.
+- **One login everywhere:** All servers validate tokens against the same
+  Keycloak (shared host). This removes the old problem of "other people's
+  shells return 401 because every stack has its own Keycloak."
+- **Product made of parts from others:** A new shell simply references
+  partners' submodels by ID (ModelReference) — the registry resolves it,
+  and the data stays with the partner. Ready-made scripts for this live
+  in the sister repo `aas-federation` (`tools/compose_product.py`).
 
-| Dienst | URL |
+| Service | URL |
 |---|---|
-| Eigene Web UI + eigenes Repo | `https://<eigene-ip>/` |
-| Gemeinsame Registries | `https://<shared-ip>/shell-descriptors`, `/submodel-descriptors` |
+| Your own web UI + repo | `https://<your-own-ip>/` |
+| Shared registries | `https://<shared-ip>/shell-descriptors`, `/submodel-descriptors` |
 | Keycloak (Admin: admin/admin) | `https://<shared-ip>/auth` |
 
-## Sicherheit
+## Security
 
-- Browser-Verkehr komplett über **HTTPS** (nginx, selbstsigniertes Zertifikat
-  pro Maschine). Container-zu-Shared-Verkehr (Token-Endpoint, JWKS,
-  Descriptor-Push) läuft über LAN-HTTP-Ports 8082–8084 des Shared-Hosts —
-  im Team-LAN akzeptabel, fürs Internet nicht (dann: echte Zertifikate und
-  alles über 443).
-- Jede API verlangt ein Keycloak-Token: `admin` darf schreiben, `user` nur
-  lesen, ohne Token gibt es 401. Innerhalb des Teams vertrauen sich alle
-  (jeder nutzt `basyx-admin`) — Schutz pro Firma/Person geht mit
-  Firmen-Rollen wie im Repo `aas-federation` (SECURITY.md dort).
-- Zertifikatswarnungen: einmal pro Partner-Server `https://<partner-ip>/`
-  öffnen und akzeptieren, sonst blockt der Browser das Nachladen der Daten.
+- Browser traffic runs entirely over **HTTPS** (nginx, self-signed
+  certificate per machine). Container-to-shared traffic (token endpoint,
+  JWKS, descriptor push) runs over the shared host's LAN HTTP ports
+  8082–8084 — acceptable within the team LAN, but not for the internet
+  (in that case: use real certificates and route everything over 443).
+- Every API requires a Keycloak token: `admin` may write, `user` may only
+  read, and requests without a token get a 401. Within the team, everyone
+  trusts each other (everyone uses `basyx-admin`) — per-company/per-person
+  protection is available via company roles as in the `aas-federation`
+  repo (SECURITY.md there).
+- Certificate warnings: open `https://<partner-ip>/` once per partner
+  server and accept it, otherwise the browser will block reloading the
+  data.
 
-## Aufbau
+## Structure
 
 ```
-join.py                 einmalig ausführen: .env, nginx.conf, Zertifikat
-docker-compose.yml      Profile: node (jeder) + shared (nur Shared-Host)
-nginx/                  HTTPS-Proxy-Template (Port 443)
-node/                   Config + RBAC des eigenen AAS-Servers
-shared/                 Keycloak-Realm, Registry-Configs + RBAC (Shared-Host)
-aas/                    AAS-Beispieldateien zum Hochladen
-excel-to-aasx/, parser/, DPP.json   Inhalts-Tooling (unabhängig vom Setup)
+join.py                 run once: .env, nginx.conf, certificate
+docker-compose.yml      profiles: node (everyone) + shared (shared host only)
+nginx/                  HTTPS proxy template (port 443)
+node/                   config + RBAC for your own AAS server
+shared/                 Keycloak realm, registry configs + RBAC (shared host)
+aas/                    example AAS files to upload
+excel-to-aasx/, parser/, DPP.json   content tooling (independent of setup)
 ```
 
 ## Troubleshooting
 
-- **Shell eines Partners lädt nicht:** dessen Zertifikat noch nicht
-  akzeptiert (siehe oben) — oder er ist offline; der Descriptor bleibt
-  dann trotzdem in der Registry stehen.
-- **Eigene Shell erscheint nicht bei anderen:** `docker logs aas-env` —
-  die Registry-Integration loggt jeden Anmeldeversuch. Meist: Shared-Host
-  nicht erreichbar oder `join.py` mit falscher `--shared`-IP gelaufen.
-- **Login-Redirect schlägt fehl:** Keycloak-Zertifikat des Shared-Hosts
-  im Browser noch nicht akzeptiert (`https://<shared-ip>/auth` öffnen).
-- **Realm geändert:** wird nur beim ersten Keycloak-Start importiert →
-  auf dem Shared-Host `docker compose down -v && docker compose up -d`
-  (löscht auch Registry-/Repo-Daten!).
-- **502 vom nginx:** Docker-Netz kollidiert mit dem LAN? Das Compose-Netz
-  ist auf `172.30.99.0/24` gepinnt — ggf. anpassen.
-- **Shell plötzlich nicht mehr in der Registry, obwohl sie im Repo liegt:**
-  BaSyx-Eigenheit (2.0.0-SNAPSHOT): ein *abgelehnter* DELETE-Versuch (403,
-  z. B. durch einen Nur-Lese-User) entfernt den Descriptor trotzdem aus der
-  Registry, und ein PUT meldet ihn nicht neu an — nur ein CREATE tut das.
-  Abhilfe: Shell als `basyx-admin` löschen und neu anlegen (bzw. neu
-  hochladen), dann ist der Descriptor wieder da.
+- **A partner's shell won't load:** their certificate hasn't been
+  accepted yet (see above) — or they're offline; the descriptor stays
+  in the registry regardless.
+- **My own shell doesn't show up for others:** check `docker logs
+  aas-env` — the registry integration logs every registration attempt.
+  Usually: the shared host isn't reachable, or `join.py` was run with
+  the wrong `--shared` IP.
+- **Login redirect fails:** the shared host's Keycloak certificate hasn't
+  been accepted in the browser yet (open `https://<shared-ip>/auth`).
+- **Realm changed:** it's only imported on Keycloak's first start → on
+  the shared host run `docker compose down -v && docker compose up -d`
+  (this also deletes registry/repo data!).
+- **502 from nginx:** Docker network colliding with the LAN? The compose
+  network is pinned to `172.30.99.0/24` — adjust if needed.
+- **A shell suddenly disappears from the registry even though it's still
+  in the repo:** BaSyx quirk (2.0.0-SNAPSHOT): a *rejected* DELETE attempt
+  (403, e.g. from a read-only user) still removes the descriptor from the
+  registry, and a subsequent PUT does not re-register it — only a CREATE
+  does. Workaround: delete the shell as `basyx-admin` and recreate it (or
+  re-upload it), and the descriptor will be back.

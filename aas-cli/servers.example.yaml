@@ -1,0 +1,38 @@
+# Copy to servers.yaml (or run 'aas-cli init' to generate the "local" entry
+# automatically from this repo's own .env) and fill in one entry per server
+# you want to reach -- your own, a teammate's, or an external partner's.
+servers:
+  local:
+    url: https://192.168.56.219
+    registry_url: https://192.168.56.219 # shared-host registry, see README
+    verify_tls: false # self-signed certs in this team network
+    keycloak:
+      url: https://192.168.56.219/auth
+      realm: basyx
+      client_id: basyx-api
+      client_secret: basyx-api-secret
+    username: basyx-admin
+    password: basyx-admin # or: password_env: AAS_LOCAL_PASSWORD
+
+  partner1:
+    url: https://192.168.56.50
+    verify_tls: false
+    keycloak:
+      url: https://192.168.56.50/auth
+      realm: basyx
+      client_id: basyx-api
+      client_secret: basyx-api-secret
+    username: basyx-user # read-only role -- see node/rbac_rules.json
+    password: basyx-user
+
+  # A server outside this team's network, with its own auth -- the CLI
+  # doesn't assume a shared Keycloak, each entry is fully independent.
+  external:
+    url: https://aas.example-partner.org
+    verify_tls: true
+    keycloak:
+      url: https://auth.example-partner.org
+      realm: some-realm
+      client_id: some-client
+    username: my-external-user
+    password_env: EXTERNAL_PASSWORD
