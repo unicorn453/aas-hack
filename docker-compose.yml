@@ -219,6 +219,9 @@ services:
       timeout: 5s
       start_period: 15s
       retries: 10
+    volumes:
+      - ./_files/vault_init.sh:/vault-init.sh
+    entrypoint: ["/bin/sh", "-c", "sh /vault-init.sh & vault server -dev"]
     networks:
       - edc-network
 
@@ -236,33 +239,9 @@ services:
     ports:
       - "19191:19191"
       - "19193:19193"
-    environment:
-      WEB_HTTP_PROTOCOL_HOST: 0.0.0.0
-      WEB_HTTP_PROTOCOL_PORT: 19191
-      WEB_HTTP_PROTOCOL_PATH: /api/dsp
-      WEB_HTTP_MANAGEMENT_HOST: 0.0.0.0
-      WEB_HTTP_MANAGEMENT_PORT: 19193
-      WEB_HTTP_MANAGEMENT_PATH: /api/management
-      WEB_HTTP_MANAGEMENT_AUTH_KEY: password
-      EDC_DSP_CALLBACK_ADDRESS: https://${HOST_ADDRESS}:19191/api/dsp
-      EDC_DATAPLANE_API_PUBLIC_BASEURL: https://${HOST_ADDRESS}:19291/api/public
-      EDC_VAULT_HASHICORP_URL: http://vault:8200
-      EDC_VAULT_HASHICORP_TOKEN: root
-      EDC_DATASOURCE_DEFAULT_URL: jdbc:postgresql://postgres:5432/edc
-      EDC_DATASOURCE_DEFAULT_USER: edc
-      EDC_DATASOURCE_DEFAULT_PASSWORD: edc
-      EDC_PARTICIPANT_ID: did:web:${HOST_ADDRESS}
-      EDC_PARTICIPANT_CONTEXT_ID: 226d238b-4b27-4936-9fc4-1664504784aa
-
-      TRACTUSX_EDC_PARTICIPANT_BPN: BPNL000000000001
-
-      EDC_IAM_STS_OAUTH_TOKEN_URL: https://${HOST_ADDRESS}/auth/realms/edc/protocol/openid-connect/token
-
-      EDC_IAM_STS_OAUTH_CLIENT_ID: edc-client
-
-      EDC_IAM_STS_OAUTH_CLIENT_SECRET_ALIAS: edc-oauth-secret
-
-      TX_EDC_IAM_DCP_BDRS_SERVER_URL: https://${HOST_ADDRESS}:8443
+    volumes:
+      - ./_files/edc-controlplane.properties/application.properties:/app/configuration.properties:ro
+      - ./_files/rules/edc_controlplane_rbac_rules.json:/application/rbac_rules.json:ro
     networks:
       - edc-network
 
@@ -284,6 +263,22 @@ services:
       EDC_DATAPLANE_API_PUBLIC_BASEURL: https://${HOST_ADDRESS}:19291/api/public
       EDC_VAULT_HASHICORP_URL: http://vault:8200
       EDC_VAULT_HASHICORP_TOKEN: root
+    volumes:
+      - ./_files/edc-dataplane.properties/application.properties:/app/configuration.properties:ro
+
+  edc-init:
+    image: curlimages/curl:8.9.1
+    container_name: edc-init
+    depends_on:
+      edc-controlplane:
+        condition: service_started
+    restart: "no"
+    command: ["sh", "/init/init_edc.sh"]
+    volumes:
+      - ./_files/init_edc.sh:/init/init_edc.sh:ro
+      - ./_files/edc-init:/config:ro
+    networks:
+      - edc-network
 
 
 volumes:

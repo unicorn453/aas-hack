@@ -66,12 +66,12 @@
       "directAccessGrantsEnabled": true,
       "fullScopeAllowed": true,
       "redirectUris": [
-        "https://__HOST_ADDRESS__/*",
-        "https://__HOST_ADDRESS__:3000/*"
+        "https://172.17.255.202/*",
+        "https://172.17.255.202:3000/*"
       ],
       "webOrigins": [
-        "https://__HOST_ADDRESS__",
-        "https://__HOST_ADDRESS__:3000"
+        "https://172.17.255.202",
+        "https://172.17.255.202:3000"
       ],
       "defaultClientScopes": [
         "profile",

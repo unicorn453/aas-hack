@@ -1,0 +1,29 @@
+infrastructures:
+  default: infra1
+  infra1:
+    name: Minimal BaSyx
+    components:
+      aasRegistry:
+        baseUrl: https://172.17.255.202/shell-descriptors
+        hasDiscoveryIntegration: true
+      submodelRegistry:
+        baseUrl: https://172.17.255.202/submodel-descriptors
+      aasRepository:
+        baseUrl: https://172.17.255.202/shells
+        hasRegistryIntegration: true
+      submodelRepository:
+        baseUrl: https://172.17.255.202/submodels
+        hasRegistryIntegration: true
+      conceptDescriptionRepository:
+        baseUrl: https://172.17.255.202/concept-descriptions
+    security:
+      type: oauth2
+      oauth2:
+        flow: authorizationCode
+        tokenUrl: https://172.17.255.202/auth/realms/basyx/protocol/openid-connect/token
+        authorizationUrl: https://172.17.255.202/auth/realms/basyx/protocol/openid-connect/auth
+        issuer: https://172.17.255.202/auth/realms/basyx
+        scopes:
+          openid: OpenID scope
+          profile: User profile
+          email: User email

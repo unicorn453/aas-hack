@@ -1,0 +1,18 @@
+{
+  "@context": {
+    "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+  },
+  "@id": "asset-aas-shells",
+  "@type": "Asset",
+  "properties": {
+    "description": "AAS shells endpoint"
+  },
+  "dataAddress": {
+    "@type": "DataAddress",
+    "type": "HttpData",
+    "baseUrl": "https://__HOST_ADDRESS__/shells",
+    "proxyPath": "true",
+    "proxyQueryParams": "true",
+    "proxyMethod": "true"
+  }
+}

@@ -3,10 +3,4 @@ certs/
 .venv-scripts/
 downloaded_shells/
 parser/.venv/
-
-# Generated from *.template by setup_local_ip.py - contains this machine's IP,
-# not meant to be committed. Edit the .template file instead.
-nginx/nginx.conf
-basyx-infra.yml/basyx-infra.yml
-_files/aas-env.properties/application.properties
-_files/keycloak/realm-basyx.json
+__pycache__/
