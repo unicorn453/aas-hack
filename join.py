@@ -37,11 +37,27 @@ REPO_ROOT = Path(__file__).resolve().parent
 # und würden nginx wegen unbekannter Upstreams am Start hindern.
 SHARED_LOCATIONS = """
     # --- nur Shared-Host: gemeinsame AAS-Registry ---
+    # CORS wird hier von nginx gesetzt, nicht vom Registry-Image: die
+    # basyx.cors.*-Konfiguration in shared/aas-registry.yml wird von
+    # eclipsebasyx/aas-registry-log-mongodb (2.0.0-SNAPSHOT) nicht auf die
+    # Responses angewendet, weder bei 200 noch bei 401 -- Browser einer
+    # anderen Node-IP blockieren die Registry-Antworten dadurch per CORS.
     location /shell-descriptors {
         proxy_pass         http://aas-registry:8080;
         proxy_set_header   Host              $host;
         proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
         proxy_set_header   X-Forwarded-Proto $scheme;
+
+        add_header 'Access-Control-Allow-Origin' '*' always;
+        add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD' always;
+        add_header 'Access-Control-Allow-Headers' 'Authorization, Content-Type, Accept' always;
+        if ($request_method = OPTIONS) {
+            add_header 'Access-Control-Allow-Origin' '*' always;
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD' always;
+            add_header 'Access-Control-Allow-Headers' 'Authorization, Content-Type, Accept' always;
+            add_header 'Content-Length' 0;
+            return 204;
+        }
     }
 
     # --- nur Shared-Host: gemeinsame Submodel-Registry ---
@@ -50,6 +66,17 @@ SHARED_LOCATIONS = """
         proxy_set_header   Host              $host;
         proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
         proxy_set_header   X-Forwarded-Proto $scheme;
+
+        add_header 'Access-Control-Allow-Origin' '*' always;
+        add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD' always;
+        add_header 'Access-Control-Allow-Headers' 'Authorization, Content-Type, Accept' always;
+        if ($request_method = OPTIONS) {
+            add_header 'Access-Control-Allow-Origin' '*' always;
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD' always;
+            add_header 'Access-Control-Allow-Headers' 'Authorization, Content-Type, Accept' always;
+            add_header 'Content-Length' 0;
+            return 204;
+        }
     }
 
     # --- nur Shared-Host: gemeinsames Keycloak ---
