@@ -75,7 +75,13 @@
     "action": ["READ"],
     "targetInformation": {
       "@type": "submodel",
-      "submodelIds": "*",
+      "submodelIds": [
+        "https://example.org/submodels/schunk/pgn-plus-p-64-1/carbonfootprint",
+        "https://example.org/submodels/schunk/pgn-plus-p-64-1/technicaldata",
+        "https://example.org/submodels/schunk/pgn-plus-p-64-1/nameplate",
+        "https://example.org/submodels/schunk/pgn-plus-p-64-1/maintenanceinstructions",
+        "https://example.org/submodels/schunk/pgn-plus-p-64-1/handoverdocumentation"
+      ],
       "submodelElementIdShortPaths": "*"
     }
   },
@@ -85,7 +91,13 @@
     "targetInformation": {
       "@type": "aas-environment",
       "aasIds": "*",
-      "submodelIds": "*",
+      "submodelIds": [
+        "https://example.org/submodels/schunk/pgn-plus-p-64-1/carbonfootprint",
+        "https://example.org/submodels/schunk/pgn-plus-p-64-1/technicaldata",
+        "https://example.org/submodels/schunk/pgn-plus-p-64-1/nameplate",
+        "https://example.org/submodels/schunk/pgn-plus-p-64-1/maintenanceinstructions",
+        "https://example.org/submodels/schunk/pgn-plus-p-64-1/handoverdocumentation"
+      ],
       "conceptDescriptionIds": "*"
     }
   }

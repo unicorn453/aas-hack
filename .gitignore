@@ -1,5 +1,10 @@
 certs/
 .env
+.env.*.local
+_temp/
+**/node_modules/
+**/dist/
+**/__pycache__/
 .venv-scripts/
 downloaded_shells/
 parser/.venv/

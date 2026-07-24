@@ -16,16 +16,21 @@ basyx:
       - "Accept"
   feature:
     authorization:
-      enabled: true
+      enabled: false
       type: rbac
       jwtBearerTokenProvider: keycloak
       rbac:
         file: file:/application/config/rbac_rules.json
 
 spring:
-  mongodb:
-    database: sm-registry
-    uri: mongodb://mongoAdmin:mongoPassword@mongodb:27017
+  data:
+    mongodb:
+      host: mongodb
+      port: 27017
+      database: sm-registry
+      username: mongoAdmin
+      password: mongoPassword
+      authentication-database: admin
   security:
     oauth2:
       resourceserver:

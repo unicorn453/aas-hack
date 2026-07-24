@@ -1,2 +1,0 @@
-Parser version: 2021.06.22.build-1
-completed

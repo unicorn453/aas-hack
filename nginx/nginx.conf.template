@@ -22,23 +22,10 @@ server {
         proxy_set_header   X-Forwarded-Proto $scheme;
     }
 
-    # AAS Registry
-    location /shell-descriptors {
-        proxy_pass         http://aas-registry:8080;
-        proxy_set_header   Host              $host;
-        proxy_set_header   X-Real-IP         $remote_addr;
-        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
-        proxy_set_header   X-Forwarded-Proto $scheme;
-    }
-
-    # Submodel Registry
-    location /submodel-descriptors {
-        proxy_pass         http://submodel-registry:8080;
-        proxy_set_header   Host              $host;
-        proxy_set_header   X-Real-IP         $remote_addr;
-        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
-        proxy_set_header   X-Forwarded-Proto $scheme;
-    }
+    # Raw registry APIs are internal-only. Public discovery is served by
+    # dpp-public-api, which allowlists the five static DPP submodels.
+    location /shell-descriptors { return 404; }
+    location /submodel-descriptors { return 404; }
 
     # AAS Environment — shells
     location /shells {
@@ -58,6 +45,15 @@ server {
         proxy_set_header   X-Forwarded-Proto $scheme;
     }
 
+    # Anonymous DPP facade: only the allowlisted static DPP data is exposed.
+    location /public/ {
+        proxy_pass         http://dpp-public-api:8080;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+    }
+
     # AAS Environment — concept descriptions
     location /concept-descriptions {
         proxy_pass         http://aas-env:8081;
@@ -69,7 +65,7 @@ server {
 
     # AAS Environment — file upload
     location /upload {
-        proxy_pass              http://aas-env:8081;
+        proxy_pass              http://aas-upload-gateway:8080;
         proxy_set_header        Host              $host;
         proxy_set_header        X-Real-IP         $remote_addr;
         proxy_set_header        X-Forwarded-For   $proxy_add_x_forwarded_for;

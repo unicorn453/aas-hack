@@ -16,6 +16,7 @@ services:
       - submodel-registry
       - aas-env
       - keycloak
+      - dpp-public-api
 
 
   mongodb:
@@ -80,11 +81,100 @@ services:
       keycloak-db:
         condition: service_healthy
 
-  aas-registry:
-    image: eclipsebasyx/aas-registry-log-mongodb:2.0.0-SNAPSHOT
-    container_name: aas-registry
+  mqtt-broker:
+    image: eclipse-mosquitto:2
+    container_name: mqtt-broker
+    restart: always
     ports:
-      - '8082:8080'
+      - "1883:1883"
+    volumes:
+      - ./mqtt-integration/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mqtt-data:/mosquitto/data
+      - mqtt-log:/mosquitto/log
+
+  mqtt-aas-subscriber:
+    build:
+      context: ./mqtt-integration/mqtt-aas-subscriber
+      network: host
+    container_name: mqtt-aas-subscriber
+    restart: always
+    environment:
+      MQTT_BROKER_HOST: ${MQTT_BROKER_HOST:-mqtt-broker}
+      MQTT_BROKER_PORT: "1883"
+      MQTT_TOPIC: factory/pgn-plus-p-64-1/telemetry
+      AAS_BASE_URL: http://aas-env:8081
+      KEYCLOAK_URL: http://keycloak:8080/auth
+      KEYCLOAK_USERNAME: basyx-admin
+      KEYCLOAK_PASSWORD: basyx-admin
+      AAS_VERIFY_TLS: "true"
+      AAS_ID: https://example.org/aas/schunk/pgn-plus-p-64-1
+      TIMESERIES_ID: https://example.org/submodels/schunk/pgn-plus-p-64-1/timeseries
+    depends_on:
+      keycloak:
+        condition: service_started
+      aas-env:
+        condition: service_started
+
+  mqtt-publisher:
+    build:
+      context: ./simulation/mqtt-publisher
+      network: host
+    container_name: mqtt-publisher
+    profiles: ["simulation"]
+    restart: unless-stopped
+    environment:
+      MQTT_BROKER_HOST: ${MQTT_BROKER_HOST:-mqtt-broker}
+      MQTT_BROKER_PORT: "1883"
+      MQTT_TOPIC: factory/pgn-plus-p-64-1/telemetry
+      SIMULATION_INTERVAL: "2"
+    depends_on:
+      mqtt-broker:
+        condition: service_started
+
+  dpp-public-api:
+    build: ./dpp-public-api
+    container_name: dpp-public-api
+    restart: always
+    environment:
+      AAS_BASE_URL: http://aas-env:8081
+      KEYCLOAK_URL: http://keycloak:8080/auth
+      KEYCLOAK_USERNAME: basyx-admin
+      KEYCLOAK_PASSWORD: basyx-admin
+      PUBLIC_BASE_URL: https://${HOST_ADDRESS}
+      PUBLIC_SUBMODEL_IDS: >-
+        https://example.org/submodels/schunk/pgn-plus-p-64-1/carbonfootprint,
+        https://example.org/submodels/schunk/pgn-plus-p-64-1/technicaldata,
+        https://example.org/submodels/schunk/pgn-plus-p-64-1/nameplate,
+        https://example.org/submodels/schunk/pgn-plus-p-64-1/maintenanceinstructions,
+        https://example.org/submodels/schunk/pgn-plus-p-64-1/handoverdocumentation
+      PUBLIC_AAS_IDS: https://example.org/aas/schunk/pgn-plus-p-64-1
+    depends_on:
+      keycloak:
+        condition: service_started
+      aas-env:
+        condition: service_started
+
+  aas-upload-gateway:
+    build: ./aas-upload-gateway
+    container_name: aas-upload-gateway
+    restart: always
+    environment:
+      AAS_BASE_URL: http://aas-env:8081
+      KEYCLOAK_URL: http://keycloak:8080/auth
+      AAS_REGISTRY_URL: http://aas-registry:8080
+      SUBMODEL_REGISTRY_URL: http://submodel-registry:8080
+      EXTERNAL_URL: https://${HOST_ADDRESS}
+      KEYCLOAK_USERNAME: basyx-admin
+      KEYCLOAK_PASSWORD: basyx-admin
+    depends_on:
+      keycloak:
+        condition: service_started
+      aas-env:
+        condition: service_started
+
+  aas-registry:
+    image: eclipsebasyx/aas-registry-log-mongodb:2.0.0-milestone-10
+    container_name: aas-registry
     environment:
       - SERVER_PORT=8080
       - BASYX_CORS_ALLOWED_ORIGINS=https://*
@@ -100,13 +190,11 @@ services:
         condition: service_healthy
 
   submodel-registry:
-    image: eclipsebasyx/submodel-registry-log-mem:2.0.0-SNAPSHOT
+    image: eclipsebasyx/submodel-registry-log-mongodb:2.0.0-milestone-10
     container_name: submodel-registry
     volumes:
       - ./_files/sm-registry.yml:/workspace/config/application.yml
       - ./_files/rules/sm_registry_rbac_riles.json:/application/config/rbac_rules.json:ro
-    ports:
-      - '8083:8080'
     environment:
       - SERVER_PORT=8080
       - BASYX_CORS_ALLOWED_ORIGINS=https://*
@@ -119,7 +207,7 @@ services:
         condition: service_healthy
 
   aas-env:
-    image: eclipsebasyx/aas-environment:2.0.0-SNAPSHOT
+    image: eclipsebasyx/aas-environment:2.0.0-milestone-10
     container_name: aas-env
     volumes:
       - ./aas:/application/aas
@@ -129,6 +217,13 @@ services:
       - '8081:8081'
     environment:
       - SERVER_PORT=8081
+      - MONGODB_HOST=mongodb
+      - MONGODB_PORT=27017
+      - MONGODB_DATABASE=aas-env
+      - MONGODB_USERNAME=mongoAdmin
+      - MONGODB_PASSWORD=mongoPassword
+      - MONGODB_AUTHENTICATION_DATABASE=admin
+      - BASYX_EXTERNAL_URL=https://${HOST_ADDRESS}
       - JAVA_TOOL_OPTIONS=-Xms512m -Xmx1024m
     depends_on:
       mongodb:
@@ -148,20 +243,36 @@ services:
       ALLOW_UPLOADING: "true"
       PRIMARY_LIGHT_COLOR: "#0cb2f0"
       PRIMARY_DARK_COLOR: "#f69222"
-      AAS_REGISTRY_PATH: "https://${HOST_ADDRESS}/shell-descriptors"
-      SUBMODEL_REGISTRY_PATH: "https://${HOST_ADDRESS}/submodel-descriptors"
-      AAS_REPO_PATH: "https://${HOST_ADDRESS}/shells"
-      SUBMODEL_REPO_PATH: "https://${HOST_ADDRESS}/submodels"
-      KEYCLOAK_URL: "https://${HOST_ADDRESS}/auth"
-      KEYCLOAK_REALM: "basyx"
-      KEYCLOAK_CLIENT_ID: "basyx-web"
-      KEYCLOAK_CLIENT_SECRET: "basyx-admin"
     volumes:
-      - ./basyx-infra.yml/basyx-infra.yml:/application/config/basyx-infra.yml:ro
+      - ./basyx-infra.yml/basyx-infra.yml:/basyx-infra.yml:ro
     restart: always
     depends_on:
       aas-env:
         condition: service_started
+
+  dpp-web-ui:
+    build:
+      context: ./dpp-web-ui
+      network: host
+      args:
+        VITE_PUBLIC_API_BASE: ${VITE_PUBLIC_API_BASE:-https://${HOST_ADDRESS:-172.17.251.203}/public}
+        VITE_SECURED_API_BASE: ${VITE_SECURED_API_BASE:-https://${HOST_ADDRESS:-172.17.251.203}}
+        VITE_KEYCLOAK_URL: ${VITE_KEYCLOAK_URL:-https://${HOST_ADDRESS:-172.17.251.203}/auth}
+        VITE_KEYCLOAK_REALM: ${VITE_KEYCLOAK_REALM:-basyx}
+        VITE_KEYCLOAK_CLIENT_ID: ${VITE_KEYCLOAK_CLIENT_ID:-basyx-web}
+        VITE_AAS_ID: ${VITE_AAS_ID:-https://example.org/aas/schunk/pgn-plus-p-64-1}
+        VITE_TIMESERIES_ID: ${VITE_TIMESERIES_ID:-https://example.org/submodels/schunk/pgn-plus-p-64-1/timeseries}
+        VITE_POLL_INTERVAL_MS: ${VITE_POLL_INTERVAL_MS:-2000}
+        VITE_REQUEST_TIMEOUT_MS: ${VITE_REQUEST_TIMEOUT_MS:-60000}
+    container_name: dpp-web-ui
+    restart: always
+    ports:
+      - "3001:443"
+    volumes:
+      - ./certs:/etc/nginx/certs:ro
+    depends_on:
+      - dpp-public-api
+      - keycloak
 
 
       
@@ -181,4 +292,5 @@ volumes:
   mongodb-data:
   keycloak-db-data:
   keycloak-data:
-
+  mqtt-data:
+  mqtt-log:
