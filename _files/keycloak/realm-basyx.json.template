@@ -78,6 +78,23 @@
         "email",
         "roles"
       ]
+    },
+    {
+      "clientId": "edc-control-plane",
+      "name": "EDC",
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "edc-control-plane-secret",
+      "fullScopeAllowed": true,
+      "defaultClientScopes": [
+        "profile",
+        "email",
+        "roles"
+      ]
     }
   ],
   "users": [

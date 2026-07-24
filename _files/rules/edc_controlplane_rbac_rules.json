@@ -1,0 +1,20 @@
+{
+  "rules": [
+    {
+      "id": "read-shells-rule",
+      "effect": "ALLOW",
+      "description": "Allow reading shells",
+      "principals": ["user"],
+      "actions": ["read"],
+      "resources": ["shells"]
+    },
+    {
+      "id": "read-submodels-rule",
+      "effect": "ALLOW",
+      "description": "Allow reading submodels",
+      "principals": ["user"],
+      "actions": ["read"],
+      "resources": ["submodels"]
+    }
+  ]
+}

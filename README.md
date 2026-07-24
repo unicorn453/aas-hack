@@ -43,3 +43,39 @@ To stop and remove the container run:
 ```bash
 docker compose down
 ```
+
+## EDC + Cross-server discoverability
+
+This repository includes Tractus-X EDC services so other servers can discover and
+connect to your data endpoints over the network.
+
+1. Ensure your IP is current in `.env`:
+
+```bash
+python3 setup_local_ip.py
+```
+
+2. Start the stack:
+
+```bash
+docker compose up -d
+```
+
+3. Verify EDC endpoints are reachable from your host:
+
+```bash
+curl -k https://$HOST_ADDRESS:19191/api/dsp
+curl -k https://$HOST_ADDRESS:19291/api/public
+```
+
+4. Publish your AAS descriptors to a partner server so they can discover your shells:
+
+```bash
+python3 register_remote.py --partner-url https://<partner-ip>
+```
+
+5. Remove them again when needed:
+
+```bash
+python3 register_remote.py --partner-url https://<partner-ip> --deregister
+```

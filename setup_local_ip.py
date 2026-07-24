@@ -28,6 +28,7 @@ TEMPLATES = [
     REPO_ROOT / "basyx-infra.yml" / "basyx-infra.yml.template",
     REPO_ROOT / "_files" / "aas-env.properties" / "application.properties.template",
     REPO_ROOT / "_files" / "keycloak" / "realm-basyx.json.template",
+    REPO_ROOT / "_files" / "edc-init" / "asset.json.template",
 ]
 
 PLACEHOLDER = "__HOST_ADDRESS__"
@@ -76,8 +77,10 @@ def ensure_cert(ip):
     certs_dir = REPO_ROOT / "certs"
     certs_dir.mkdir(exist_ok=True)
     crt, key = certs_dir / "server.crt", certs_dir / "server.key"
+    public_key, private_key = certs_dir / "transfer-public.pem", certs_dir / "transfer-private.pem"
+  
 
-    if crt.exists() and key.exists() and cert_matches_ip(crt, ip):
+    if crt.exists() and key.exists() and public_key.exists() and private_key.exists() and cert_matches_ip(crt, ip):
         print(f"[certs] already valid for {ip}, skipping")
         return
 
@@ -91,6 +94,8 @@ def ensure_cert(ip):
             ],
             check=True, capture_output=True,
         )
+        subprocess.run(["openssl", "genrsa", "-out", str(certs_dir / "transfer-private.pem"), "4096"], check=True)
+        subprocess.run(["openssl", "rsa", "-in", str(certs_dir / "transfer-private.pem"), "-pubout", "-out", str(certs_dir / "transfer-public.pem")], check=True)
         print(f"[certs] generated certs/server.crt for {ip}")
     except FileNotFoundError:
         print("[certs] openssl not found on PATH - generate certs/server.crt manually, see README")

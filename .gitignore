@@ -8,6 +8,7 @@ _temp/
 .venv-scripts/
 downloaded_shells/
 parser/.venv/
+edci/*-logs/
 
 # Generated from *.template by setup_local_ip.py - contains this machine's IP,
 # not meant to be committed. Edit the .template file instead.
