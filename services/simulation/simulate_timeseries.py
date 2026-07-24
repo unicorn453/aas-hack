@@ -84,7 +84,7 @@ def make_submodel():
 
 def make_official_submodel():
     """Instantiate the checked-in IDTA 02008-1-1 template exactly."""
-    template_path = Path(__file__).resolve().parent.parent / "excel-to-aasx" / "third_party" / "admin-shell-io" / "submodel-templates" / "published" / "Time Series Data" / "1" / "1" / "IDTA 02008-1-1_Template_TimeSeriesData.json"
+    template_path = Path(__file__).resolve().parents[2] / "converters" / "excel-to-aasx" / "third_party" / "admin-shell-io" / "submodel-templates" / "published" / "Time Series Data" / "1" / "1" / "IDTA 02008-1-1_Template_TimeSeriesData.json"
     model = copy.deepcopy(json.loads(template_path.read_text())["submodels"][0])
     model["kind"] = "Instance"
     model["id"] = SUBMODEL_ID

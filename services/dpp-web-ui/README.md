@@ -2,7 +2,7 @@
 
 A standalone React, TypeScript and Vite interface for Digital Product
 Passport data and protected live telemetry. The architecture and access split
-are documented in [`docs/public-live-data-and-mqtt.md`](../docs/public-live-data-and-mqtt.md).
+are documented in [`docs/public-live-data-and-mqtt.md`](../../docs/public-live-data-and-mqtt.md).
 
 The public asset and five static DPP submodels are loaded anonymously through
 `dpp-public-api`. Keycloak Authorization Code + PKCE is initialized in `check-sso`
@@ -35,13 +35,13 @@ for an existing development realm, add the port 3001 redirect URI/web origin in
 the `basyx-web` client or recreate the disposable development realm.
 
 The repository uses a self-signed TLS certificate. Trust or explicitly allow
-the generated `certs/server.crt` in the browser before testing API and login
+the generated `config/certs/server.crt` in the browser before testing API and login
 flows. HTTPS is required for reliable Keycloak PKCE authentication.
 
 ## Local frontend development
 
 ```bash
-cd dpp-web-ui
+cd services/dpp-web-ui
 cp .env.example .env.local
 npm ci
 npm run dev
@@ -81,7 +81,7 @@ docker build -t schunk-dpp-monitor:test \
   --build-arg VITE_PUBLIC_API_BASE=https://<server-ip>/public \
   --build-arg VITE_SECURED_API_BASE=https://<server-ip> \
   --build-arg VITE_KEYCLOAK_URL=https://<server-ip>/auth \
-  dpp-web-ui
+  services/dpp-web-ui
 docker compose config
 ```
 
@@ -92,7 +92,7 @@ through environment variables rather than committed in frontend source:
 API_BASE=https://<server-ip> \
 BASYX_USER_PASSWORD='<development-password>' \
 BASYX_ADMIN_PASSWORD='<development-password>' \
-./dpp-web-ui/tests/api-smoke.sh
+./services/dpp-web-ui/tests/api-smoke.sh
 ```
 
 Use `CURL_INSECURE=1` only for the generated development certificate.
@@ -100,7 +100,7 @@ Use `CURL_INSECURE=1` only for the generated development certificate.
 For the live acceptance test:
 
 ```bash
-python3 simulation/start_simulation.py
+python3 services/simulation/start_simulation.py
 ```
 
 Log in as the admin development user, confirm the KPI values and charts update,

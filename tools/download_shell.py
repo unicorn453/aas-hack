@@ -9,13 +9,13 @@ against a remote/partner registry by just changing --registry-url.
 
 Usage:
     pip install requests
-    python3 download_shell.py
-    python3 download_shell.py --aas-id "https://acplt.org/Simple_AAS"
-    python3 download_shell.py --registry-url https://<partner-ip>
+    python3 tools/download_shell.py
+    python3 tools/download_shell.py --aas-id "https://acplt.org/Simple_AAS"
+    python3 tools/download_shell.py --registry-url https://<partner-ip>
 examlple:
-    .venv-scripts/bin/python3 download_shell.py
-    .venv-scripts/bin/python3 download_shell.py --aas-id "https://acplt.org/Simple_AAS"
-    .venv-scripts/bin/python3 download_shell.py --registry-url https://<example-ip> --keycloak-url https://<example-ip>/auth
+    .venv-scripts/bin/python3 tools/download_shell.py
+    .venv-scripts/bin/python3 tools/download_shell.py --aas-id "https://acplt.org/Simple_AAS"
+    .venv-scripts/bin/python3 tools/download_shell.py --registry-url https://<example-ip> --keycloak-url https://<example-ip>/auth
 
 
 """

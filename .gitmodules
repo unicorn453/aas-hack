@@ -1,9 +1,9 @@
-[submodule "excel-to-aasx/third_party/admin-shell-io/submodel-templates"]
-	path = excel-to-aasx/third_party/admin-shell-io/submodel-templates
+[submodule "converters/excel-to-aasx/third_party/admin-shell-io/submodel-templates"]
+	path = converters/excel-to-aasx/third_party/admin-shell-io/submodel-templates
 	url = https://github.com/admin-shell-io/submodel-templates
-[submodule "excel-to-aasx/third_party/aas-core-works/aas-core3.0-python"]
-	path = excel-to-aasx/third_party/aas-core-works/aas-core3.0-python
+[submodule "converters/excel-to-aasx/third_party/aas-core-works/aas-core3.0-python"]
+	path = converters/excel-to-aasx/third_party/aas-core-works/aas-core3.0-python
 	url = https://github.com/aas-core-works/aas-core3.0-python
-[submodule "excel-to-aasx/third_party/aas-core-works/aas-core-codegen"]
-	path = excel-to-aasx/third_party/aas-core-works/aas-core-codegen
+[submodule "converters/excel-to-aasx/third_party/aas-core-works/aas-core-codegen"]
+	path = converters/excel-to-aasx/third_party/aas-core-works/aas-core-codegen
 	url = https://github.com/aas-core-works/aas-core-codegen

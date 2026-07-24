@@ -23,16 +23,16 @@ Usage:
     pip install requests
 
     # Register all your shells at the partner
-    python3 register_remote.py --partner-url https://<partner-ip>
+    python3 tools/register_remote.py --partner-url https://<partner-ip>
 
     # Register only one specific shell
-    python3 register_remote.py --partner-url https://<partner-ip> --aas-id <aas-id>
+    python3 tools/register_remote.py --partner-url https://<partner-ip> --aas-id <aas-id>
 
     # Remove your shells from the partner registry again
-    python3 register_remote.py --partner-url https://<partner-ip> --deregister
+    python3 tools/register_remote.py --partner-url https://<partner-ip> --deregister
 
 Example (hackathon defaults — replace IPs):
-    python3 register_remote.py \\
+    python3 tools/register_remote.py \\
         --my-url https://192.168.56.10 \\
         --partner-url https://192.168.56.20 \\
         --partner-username basyx-admin --partner-password basyx-admin

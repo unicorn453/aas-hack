@@ -24,11 +24,11 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent
 
 TEMPLATES = [
-    REPO_ROOT / "nginx" / "nginx.conf.template",
-    REPO_ROOT / "basyx-infra.yml" / "basyx-infra.yml.template",
-    REPO_ROOT / "_files" / "aas-env.properties" / "application.properties.template",
-    REPO_ROOT / "_files" / "keycloak" / "realm-basyx.json.template",
-    REPO_ROOT / "_files" / "edc-init" / "asset.json.template",
+    REPO_ROOT / "config" / "nginx" / "nginx.conf.template",
+    REPO_ROOT / "config" / "basyx-infra.yml" / "basyx-infra.yml.template",
+    REPO_ROOT / "config" / "_files" / "aas-env.properties" / "application.properties.template",
+    REPO_ROOT / "config" / "_files" / "keycloak" / "realm-basyx.json.template",
+    REPO_ROOT / "config" / "_files" / "edc-init" / "asset.json.template",
 ]
 
 PLACEHOLDER = "__HOST_ADDRESS__"
@@ -74,7 +74,7 @@ def cert_matches_ip(cert_path, ip):
 
 
 def ensure_cert(ip):
-    certs_dir = REPO_ROOT / "certs"
+    certs_dir = REPO_ROOT / "config" / "certs"
     certs_dir.mkdir(exist_ok=True)
     crt, key = certs_dir / "server.crt", certs_dir / "server.key"
     public_key, private_key = certs_dir / "transfer-public.pem", certs_dir / "transfer-private.pem"

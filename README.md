@@ -17,13 +17,13 @@ Only edit the `*.template` files if you need to change the actual config -
 the plain (non-`.template`) versions are generated and gitignored.
 
 If `openssl` isn't on your PATH, the script will skip cert generation and you
-can create `certs/server.crt` + `certs/server.key` yourself:
+can create `config/certs/server.crt` + `config/certs/server.key` yourself:
 
 ```bash
-mkdir -p ./certs
+mkdir -p ./config/certs
 openssl req -x509 -newkey rsa:4096 -sha256 -days 3650 -nodes \
-  -keyout ./certs/server.key \
-  -out ./certs/server.crt \
+  -keyout ./config/certs/server.key \
+  -out ./config/certs/server.crt \
   -subj "/CN=<your-ip>" \
   -addext "subjectAltName=IP:<your-ip>"
 ```
@@ -71,11 +71,11 @@ curl -k https://$HOST_ADDRESS:19291/api/public
 4. Publish your AAS descriptors to a partner server so they can discover your shells:
 
 ```bash
-python3 register_remote.py --partner-url https://<partner-ip>
+python3 tools/register_remote.py --partner-url https://<partner-ip>
 ```
 
 5. Remove them again when needed:
 
 ```bash
-python3 register_remote.py --partner-url https://<partner-ip> --deregister
+python3 tools/register_remote.py --partner-url https://<partner-ip> --deregister
 ```

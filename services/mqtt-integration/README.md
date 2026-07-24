@@ -53,7 +53,7 @@ With the MQTT broker running, start simulated data without starting another
 Docker service:
 
 ```bash
-python3 simulation/start_simulation.py
+python3 services/simulation/start_simulation.py
 ```
 
 The script publishes to `127.0.0.1:1883` by default. Use `--broker` and
