@@ -4,6 +4,7 @@ certs/
 _temp/
 **/node_modules/
 **/dist/
+**/.next/
 **/__pycache__/
 .venv-scripts/
 downloaded_shells/

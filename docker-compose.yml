@@ -19,6 +19,7 @@ services:
       - aas-env
       - keycloak
       - dpp-public-api
+      - dpp-web-ui
 
 
   mongodb:
@@ -250,24 +251,15 @@ services:
 
   dpp-web-ui:
     build:
-      context: ./dpp-web-ui
+      context: ./frontend
+      dockerfile: Dockerfile
       network: host
-      args:
-        VITE_PUBLIC_API_BASE: ${VITE_PUBLIC_API_BASE:-https://${HOST_ADDRESS:-172.17.251.203}/public}
-        VITE_SECURED_API_BASE: ${VITE_SECURED_API_BASE:-https://${HOST_ADDRESS:-172.17.251.203}}
-        VITE_KEYCLOAK_URL: ${VITE_KEYCLOAK_URL:-https://${HOST_ADDRESS:-172.17.251.203}/auth}
-        VITE_KEYCLOAK_REALM: ${VITE_KEYCLOAK_REALM:-basyx}
-        VITE_KEYCLOAK_CLIENT_ID: ${VITE_KEYCLOAK_CLIENT_ID:-basyx-web}
-        VITE_AAS_ID: ${VITE_AAS_ID:-https://example.org/aas/schunk/pgn-plus-p-64-1}
-        VITE_TIMESERIES_ID: ${VITE_TIMESERIES_ID:-https://example.org/submodels/schunk/pgn-plus-p-64-1/timeseries}
-        VITE_POLL_INTERVAL_MS: ${VITE_POLL_INTERVAL_MS:-2000}
-        VITE_REQUEST_TIMEOUT_MS: ${VITE_REQUEST_TIMEOUT_MS:-60000}
+    environment:
+      PUBLIC_API_INTERNAL_URL: http://dpp-public-api:8080
     container_name: dpp-web-ui
     restart: always
     ports:
-      - "3001:443"
-    volumes:
-      - ./certs:/etc/nginx/certs:ro
+      - "3001:3000"
     depends_on:
       - dpp-public-api
       - keycloak
