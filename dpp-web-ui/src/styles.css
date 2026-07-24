@@ -27,7 +27,7 @@ body {
   flex: 0 0 224px;
   padding: 28px 16px;
   border-right: 1px solid var(--mui-palette-divider);
-  background: color-mix(in srgb, var(--mui-palette-background-paper) 70%, transparent);
+  background: color-mix(in srgb, var(--mui-palette-background-paper) 82%, var(--mui-palette-background-default));
   position: sticky;
   top: 82px;
   height: calc(100vh - 82px);
@@ -89,19 +89,19 @@ a {
 .brand-mark {
   width: 40px;
   height: 40px;
-  border: 1px solid rgba(66, 200, 245, 0.42);
-  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--mui-palette-primary-main) 48%, transparent);
+  border-radius: 11px;
   display: grid;
   place-items: center;
   position: relative;
-  background: rgba(66, 200, 245, 0.08);
+  background: color-mix(in srgb, var(--mui-palette-primary-main) 11%, transparent);
 }
 
 .brand-mark span {
   position: absolute;
   width: 7px;
   height: 23px;
-  border: 2px solid #42c8f5;
+  border: 2px solid var(--mui-palette-primary-main);
   border-bottom: 0;
 }
 
@@ -125,8 +125,8 @@ a {
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(66, 200, 245, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(66, 200, 245, 0.035) 1px, transparent 1px);
+    linear-gradient(color-mix(in srgb, var(--mui-palette-primary-main) 5%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--mui-palette-primary-main) 5%, transparent) 1px, transparent 1px);
   background-size: 32px 32px;
   pointer-events: none;
   mask-image: linear-gradient(90deg, transparent, black);
@@ -160,14 +160,14 @@ a {
 .gripper-body {
   width: 220px;
   height: 118px;
-  border: 2px solid rgba(66, 200, 245, 0.58);
+  border: 2px solid color-mix(in srgb, var(--mui-palette-primary-main) 65%, transparent);
   border-radius: 18px 18px 28px 28px;
   background: linear-gradient(145deg, #1e3144, #0b1624);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-direction: column;
-  color: #dff7ff;
+  color: #f4fbf8;
   gap: 8px;
   font-weight: 750;
   letter-spacing: 0.06em;
@@ -181,8 +181,8 @@ a {
   height: 11px;
   bottom: 21px;
   border-radius: 8px;
-  background: #42c8f5;
-  box-shadow: 0 0 26px rgba(66, 200, 245, 0.55);
+  background: var(--mui-palette-primary-main);
+  box-shadow: 0 0 26px color-mix(in srgb, var(--mui-palette-primary-main) 55%, transparent);
 }
 
 .gripper-jaw {
@@ -239,6 +239,16 @@ a {
   border-color: color-mix(in srgb, var(--mui-palette-primary-main) 52%, transparent);
 }
 
+.submodel-card:nth-child(2n) .submodel-icon {
+  color: var(--mui-palette-secondary-main);
+  background: color-mix(in srgb, var(--mui-palette-secondary-main) 12%, transparent);
+}
+
+.submodel-card:nth-child(3n) .submodel-icon {
+  color: var(--mui-palette-warning-main);
+  background: color-mix(in srgb, var(--mui-palette-warning-main) 13%, transparent);
+}
+
 .submodel-icon,
 .kpi-icon {
   width: 46px;
@@ -266,6 +276,30 @@ a {
   overflow-wrap: anywhere;
 }
 
+.chart-card {
+  overflow: hidden;
+}
+
+.chart-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.chart-unit {
+  min-width: 32px;
+  padding: 5px 8px;
+  border-radius: 5px;
+  color: var(--mui-palette-primary-main);
+  background: color-mix(in srgb, var(--mui-palette-primary-main) 10%, transparent);
+  font-family: "IBM Plex Mono", monospace !important;
+  font-weight: 760 !important;
+  text-align: center;
+  text-transform: uppercase;
+}
+
 .raw-json {
   margin: 0;
   padding: 18px;
@@ -286,7 +320,9 @@ a {
   inset: -30px -24px;
   border-radius: 28px;
   border: 1px solid color-mix(in srgb, var(--mui-palette-primary-main) 16%, transparent);
-  background: color-mix(in srgb, var(--mui-palette-primary-main) 2%, transparent);
+  background:
+    radial-gradient(circle at 94% 4%, color-mix(in srgb, var(--mui-palette-primary-main) 10%, transparent), transparent 26%),
+    color-mix(in srgb, var(--mui-palette-primary-main) 2%, transparent);
   pointer-events: none;
 }
 
@@ -320,11 +356,30 @@ a {
 
 .live-status-card {
   border-left: 4px solid var(--mui-palette-primary-main) !important;
+  background:
+    linear-gradient(115deg, color-mix(in srgb, var(--mui-palette-primary-main) 7%, transparent), transparent 55%),
+    var(--mui-palette-background-paper) !important;
 }
 
 .kpi-card {
   height: 100%;
   min-height: 185px;
+}
+
+.kpi-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.kpi-card::after {
+  content: "";
+  position: absolute;
+  width: 92px;
+  height: 92px;
+  right: -34px;
+  bottom: -42px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--mui-palette-primary-main) 9%, transparent);
 }
 
 .kpi-warning {
@@ -339,6 +394,41 @@ a {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.section-kicker {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--mui-palette-text-secondary);
+  font-size: .72rem;
+  font-weight: 760;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.section-kicker::before {
+  content: "";
+  width: 22px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--mui-palette-primary-main);
+}
+
+.live-pulse {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 5px;
+  border-radius: 50%;
+  background: var(--mui-palette-success-main);
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--mui-palette-success-main) 45%, transparent);
+  animation: live-pulse 1.8s infinite;
+}
+
+@keyframes live-pulse {
+  70% { box-shadow: 0 0 0 7px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
 }
 
 .kpi-value small {

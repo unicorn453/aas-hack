@@ -29,9 +29,7 @@ export function DashboardPage({ publicDpp }: DashboardPageProps) {
     <>
       <Container maxWidth="xl" sx={{ py: { xs: 3, md: 5 } }}>
         <Box component="section" id="overview" aria-labelledby="overview-heading">
-          <Typography id="overview-heading" variant="overline" color="primary.main" sx={{ display: "block", mb: 1.5 }}>
-            Asset overview
-          </Typography>
+          <Box className="section-kicker" sx={{ mb: 1.5 }}>Asset overview</Box>
           <AssetOverview
             loading={publicDpp.loading}
             asset={publicDpp.asset}
@@ -49,9 +47,7 @@ export function DashboardPage({ publicDpp }: DashboardPageProps) {
             mb={3}
           >
             <Box>
-              <Typography variant="overline" color="primary.main">
-                Static product record
-              </Typography>
+              <Box className="section-kicker">Static product record</Box>
               <Typography id="dpp-heading" component="h2" variant="h2">
                 Digital Product Passport
               </Typography>
@@ -90,9 +86,10 @@ export function DashboardPage({ publicDpp }: DashboardPageProps) {
             mb={3}
           >
             <Box>
-              <Typography variant="overline" color="primary.main">
+              <Box className="section-kicker">
+                <span className={auth.isAdmin ? "live-pulse" : undefined} />
                 Operational layer
-              </Typography>
+              </Box>
               <Typography id="telemetry-heading" component="h2" variant="h2">
                 Live telemetry
               </Typography>
@@ -110,9 +107,7 @@ export function DashboardPage({ publicDpp }: DashboardPageProps) {
         </Box>}
 
         <Box component="section" id="maintenance" aria-labelledby="maintenance-heading" sx={{ mt: { xs: 7, md: 10 } }}>
-          <Typography variant="overline" color="primary.main">
-            Service workspace
-          </Typography>
+          <Box className="section-kicker">Service workspace</Box>
           <Typography id="maintenance-heading" component="h2" variant="h2">
             Maintenance and handover
           </Typography>

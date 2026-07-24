@@ -1,5 +1,6 @@
 import { Box, Card, CardContent, Typography, useTheme } from "@mui/material";
 import {
+  Area,
   CartesianGrid,
   Line,
   LineChart,
@@ -40,11 +41,19 @@ export function TelemetryChart({
 }: TelemetryChartProps) {
   const theme = useTheme();
   return (
-    <Card>
+    <Card className="chart-card">
       <CardContent>
-        <Typography component="h4" fontWeight={750} mb={2}>
-          {title}
-        </Typography>
+        <Box className="chart-heading">
+          <Box>
+            <Typography component="h4" fontWeight={750}>
+              {title}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Recent samples · {records.length} points
+            </Typography>
+          </Box>
+          <Typography className="chart-unit" variant="caption">{unit || "signal"}</Typography>
+        </Box>
         <Box
           sx={{ width: "100%", height: 240 }}
           role="img"
@@ -52,6 +61,12 @@ export function TelemetryChart({
         >
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={records} margin={{ top: 8, right: 10, bottom: 0, left: -12 }}>
+              <defs>
+                <linearGradient id={`fill-${dataKey}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={color} stopOpacity={0.24} />
+                  <stop offset="100%" stopColor={color} stopOpacity={0.015} />
+                </linearGradient>
+              </defs>
               <CartesianGrid
                 stroke={theme.palette.divider}
                 strokeDasharray="4 4"
@@ -84,6 +99,13 @@ export function TelemetryChart({
                   background: theme.palette.background.paper,
                   color: theme.palette.text.primary,
                 }}
+              />
+              <Area
+                type="monotone"
+                dataKey={dataKey}
+                stroke="none"
+                fill={`url(#fill-${dataKey})`}
+                isAnimationActive={false}
               />
               <Line
                 type="monotone"
