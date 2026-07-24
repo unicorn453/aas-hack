@@ -56,15 +56,23 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   useEffect(() => {
     let active = true;
+    let timedOut = false;
+    const fallbackTimer = window.setTimeout(() => {
+      timedOut = true;
+      if (active) setStatus("anonymous");
+    }, 3500);
 
     initializeKeycloak()
       .then((authenticated) => {
         if (!active) return;
+        window.clearTimeout(fallbackTimer);
         setUser(authenticated ? readUser() : undefined);
         setStatus(authenticated ? "authenticated" : "anonymous");
       })
       .catch((reason: unknown) => {
         if (!active) return;
+        window.clearTimeout(fallbackTimer);
+        if (timedOut) return;
         setError(
           reason instanceof Error
             ? reason.message
@@ -90,6 +98,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
     return () => {
       active = false;
+      window.clearTimeout(fallbackTimer);
     };
   }, []);
 

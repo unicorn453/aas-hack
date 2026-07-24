@@ -15,15 +15,21 @@ import { StaticSubmodelGrid } from "../components/StaticSubmodelGrid";
 import { SubmodelViewer } from "../components/SubmodelViewer";
 import { TelemetryGate } from "../components/TelemetryGate";
 import { StatusBadge } from "../components/StatusBadge";
+import { collectAssetMedia } from "../data/mediaParser";
 
 interface DashboardPageProps {
   publicDpp: ReturnType<typeof usePublicDpp>;
+  liveSubmodelId?: string;
 }
 
-export function DashboardPage({ publicDpp }: DashboardPageProps) {
+export function DashboardPage({ publicDpp, liveSubmodelId }: DashboardPageProps) {
   const auth = useAuth();
   const [selected, setSelected] = useState<PublicSubmodelResult>();
   const availableCount = publicDpp.submodels.filter((item) => item.data).length;
+  const media = collectAssetMedia(
+    publicDpp.rawAsset,
+    publicDpp.submodels.flatMap((item) => item.data ? [item.data] : []),
+  );
 
   return (
     <>
@@ -35,6 +41,7 @@ export function DashboardPage({ publicDpp }: DashboardPageProps) {
             asset={publicDpp.asset}
             error={publicDpp.assetError}
             onRetry={publicDpp.retry}
+            media={media}
           />
         </Box>
 
@@ -103,7 +110,7 @@ export function DashboardPage({ publicDpp }: DashboardPageProps) {
               size="medium"
             />
           </Stack>
-          <TelemetryGate />
+            <TelemetryGate submodelId={liveSubmodelId} />
         </Box>}
 
         <Box component="section" id="maintenance" aria-labelledby="maintenance-heading" sx={{ mt: { xs: 7, md: 10 } }}>

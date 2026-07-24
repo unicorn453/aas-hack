@@ -32,11 +32,13 @@ const initialState: LiveTelemetryState = {
 
 interface UseLiveTelemetryOptions {
   enabled: boolean;
+  submodelId?: string;
   getAccessToken: () => Promise<string>;
 }
 
 export function useLiveTelemetry({
   enabled,
+  submodelId,
   getAccessToken,
 }: UseLiveTelemetryOptions): LiveTelemetryState {
   const [state, setState] = useState<LiveTelemetryState>(initialState);
@@ -44,7 +46,7 @@ export function useLiveTelemetry({
   const unchangedPolls = useRef(0);
 
   useEffect(() => {
-    if (!enabled) {
+    if (!enabled || !submodelId) {
       latestSignature.current = undefined;
       unchangedPolls.current = 0;
       setState(initialState);
@@ -66,6 +68,7 @@ export function useLiveTelemetry({
         const token = await getAccessToken();
         if (stopped) return;
         const submodel = await securedApi.getTimeSeries(
+          submodelId,
           token,
           activeController.signal,
         );
@@ -161,7 +164,7 @@ export function useLiveTelemetry({
       if (timer !== undefined) window.clearTimeout(timer);
       activeController?.abort();
     };
-  }, [enabled, getAccessToken]);
+  }, [enabled, getAccessToken, submodelId]);
 
   return state;
 }

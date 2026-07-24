@@ -11,7 +11,7 @@ export function createIndustrialTheme(mode: PaletteMode) {
       warning: { main: dark ? "#f3b45d" : "#aa6a18" },
       error: { main: dark ? "#f27d82" : "#b33e3e" },
       background: {
-        default: dark ? "#111a1b" : "#f5f7f6",
+        default: dark ? "#111a1b" : "#ffffff",
         paper: dark ? "#182324" : "#ffffff",
       },
       text: {

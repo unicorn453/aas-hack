@@ -39,7 +39,7 @@ export const securedApi = {
     );
   },
 
-  getTimeSeries(token: string, signal?: AbortSignal) {
-    return this.getSubmodel(config.timeSeriesId, token, signal);
+  getTimeSeries(id: string, token: string, signal?: AbortSignal) {
+    return this.getSubmodel(id, token, signal);
   },
 };

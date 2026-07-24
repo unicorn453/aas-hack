@@ -59,10 +59,11 @@ function GateCard({
   );
 }
 
-export function TelemetryGate() {
+export function TelemetryGate({ submodelId }: { submodelId?: string }) {
   const auth = useAuth();
   const telemetry = useLiveTelemetry({
-    enabled: auth.authenticated && auth.isAdmin,
+    enabled: auth.authenticated && auth.isAdmin && Boolean(submodelId),
+    submodelId,
     getAccessToken: auth.getAccessToken,
   });
 
@@ -115,6 +116,17 @@ export function TelemetryGate() {
         title="Administrator permission required"
         message={`You are signed in as ${auth.user?.username ?? "a standard user"}, but your token does not contain the admin realm role. The protected TimeSeries has not been requested.`}
         tone="error"
+      />
+    );
+  }
+
+  if (!submodelId) {
+    return (
+      <GateCard
+        icon={<ShieldOutlinedIcon fontSize="large" />}
+        eyebrow="No live signal for this asset"
+        title="Static asset"
+        message="This AAS has no protected live telemetry submodel. Its public passport data remains available above."
       />
     );
   }

@@ -1,8 +1,8 @@
-# Schunk DPP Monitor
+# Digital Product Passport Monitor
 
-A standalone React, TypeScript and Vite interface for the Schunk PGN+ P 64-1
-Digital Product Passport. It runs beside the existing BaSyx Web UI and does not
-replace it.
+A standalone React, TypeScript and Vite interface for Digital Product
+Passport data and protected live telemetry. The architecture and access split
+are documented in [`docs/public-live-data-and-mqtt.md`](../docs/public-live-data-and-mqtt.md).
 
 The public asset and five static DPP submodels are loaded anonymously through
 `dpp-public-api`. Keycloak Authorization Code + PKCE is initialized in `check-sso`
@@ -21,8 +21,9 @@ docker compose up -d --build dpp-web-ui
 
 Open:
 
-- Custom DPP UI: `https://<server-ip>:3001`
-- Existing BaSyx UI: `https://<server-ip>/` or its existing port
+- Custom DPP UI: `https://<server-ip>/`
+- Direct custom UI port: `https://<server-ip>:3001`
+- Existing BaSyx UI: its configured separate port
 
 The Docker build reads `HOST_ADDRESS` from the root `.env` and compiles the
 public API, protected API, and Keycloak URLs into the static frontend. Run

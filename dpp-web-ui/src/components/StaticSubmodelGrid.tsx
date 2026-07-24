@@ -18,7 +18,6 @@ import {
 } from "@mui/material";
 import type { SvgIconComponent } from "@mui/icons-material";
 import type { PublicSubmodelResult } from "../data/submodelRepository";
-import { StatusBadge } from "./StatusBadge";
 
 const icons: Record<string, SvgIconComponent> = {
   badge: BadgeOutlinedIcon,
@@ -53,9 +52,8 @@ export function StaticSubmodelGrid({
 
   return (
     <Grid container spacing={2}>
-      {submodels.map((item, index) => {
+      {submodels.filter((item) => item.data).map((item, index) => {
         const Icon = icons[item.definition.icon] ?? DescriptionOutlinedIcon;
-        const available = Boolean(item.data);
         return (
           <Grid
             key={item.definition.id}
@@ -67,10 +65,6 @@ export function StaticSubmodelGrid({
                   <Box className="submodel-icon">
                     <Icon />
                   </Box>
-                  <StatusBadge
-                    label={available ? "Available" : "Unavailable"}
-                    tone={available ? "success" : "error"}
-                  />
                 </Stack>
                 <Typography component="h3" variant="h3" mt={3}>
                   {item.definition.title}
@@ -87,21 +81,16 @@ export function StaticSubmodelGrid({
                     {item.definition.template}
                   </Typography>
                 </Tooltip>
-                {item.error && (
-                  <Typography variant="caption" color="error.main" sx={{ display: "block", mt: 1 }}>
-                    {item.error.message}
-                  </Typography>
-                )}
               </CardContent>
               <CardActions sx={{ px: 3, pb: 3 }}>
                 <Button
                   fullWidth
-                  variant={available ? "outlined" : "text"}
+                  variant="outlined"
                   endIcon={<OpenInNewIcon />}
                   onClick={() => onOpen(item)}
                   aria-label={`Open ${item.definition.title} contents`}
                 >
-                  {available ? "Explore submodel" : "View error details"}
+                  Explore submodel
                 </Button>
               </CardActions>
             </Card>

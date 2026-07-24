@@ -3,6 +3,7 @@ import { ApiError } from "../api/http";
 import { publicApi } from "../api/publicApi";
 import { config } from "../config";
 import { loadPublicAsset } from "../data/aasRepository";
+import { parseAssetOverview } from "../data/aasParser";
 import {
   loadPublicSubmodels,
   type PublicSubmodelResult,
@@ -59,7 +60,7 @@ export function usePublicDpp() {
           );
           const projects = assetResults.flatMap((result) => {
             if (result.status !== "fulfilled") return [];
-            const { raw, overview } = result.value;
+            const { raw } = result.value;
             const referencedIds = (raw.submodels ?? []).flatMap((reference) =>
               (reference.keys ?? [])
                 .map((key) => key.value)
@@ -70,6 +71,10 @@ export function usePublicDpp() {
               : submodels.map((item) => item.definition.id)
             ).map((id) => bySubmodelId.get(id)).filter(
               (item): item is PublicSubmodelResult => Boolean(item),
+            );
+            const overview = parseAssetOverview(
+              raw,
+              projectSubmodels.flatMap((item) => item.data ? [item.data] : []),
             );
             return [{ id: overview.aasId, asset: overview, rawAsset: raw, submodels: projectSubmodels }];
           });

@@ -2,7 +2,7 @@
 
 This branch uses one direct two-site live-data path:
 
-`your server: mqtt-publisher -> mqtt-broker -> remote server: mqtt-aas-subscriber -> remote AAS`
+`machine/simulator -> mqtt-publisher -> mqtt-broker -> mqtt-aas-subscriber -> AAS TimeSeries`
 
 The bridge expects the existing remote AAS and its existing `TimeSeries`
 submodel. It updates the single current `Record` in that submodel; it does not
@@ -41,7 +41,7 @@ that broker directly; there is no separate forwarder service.
 Publish JSON to:
 
 ```text
-factory/egp-40-n-n-b/telemetry
+factory/pgn-plus-p-64-1/telemetry
 ```
 
 Required fields are `jawPosition`, `gripForce`, `temperature`,
@@ -62,7 +62,7 @@ The script publishes to `127.0.0.1:1883` by default. Use `--broker` and
 For a quick test from a machine that can reach the broker:
 
 ```bash
-mosquitto_pub -h <AAS_SERVER_IP> -t factory/egp-40-n-n-b/telemetry \
+mosquitto_pub -h <AAS_SERVER_IP> -t factory/pgn-plus-p-64-1/telemetry \
   -m '{"jawPosition":20,"gripForce":35,"temperature":25,"motorCurrent":1.2,"cycleCount":4,"state":"GRIPPING"}'
 ```
 

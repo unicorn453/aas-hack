@@ -5,6 +5,7 @@ _temp/
 **/node_modules/
 **/dist/
 **/.next/
+**/*.tsbuildinfo
 **/__pycache__/
 .venv-scripts/
 downloaded_shells/

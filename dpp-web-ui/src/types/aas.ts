@@ -105,6 +105,15 @@ export interface AssetOverview {
   thumbnail?: string;
 }
 
+export interface AssetMedia {
+  url: string;
+  label: string;
+  kind: "image" | "document";
+  role?: "logo" | "product";
+  contentType?: string;
+  downloadable?: boolean;
+}
+
 export interface StructuredElement {
   key: string;
   label: string;

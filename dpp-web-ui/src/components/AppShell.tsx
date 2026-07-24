@@ -1,12 +1,7 @@
 import DarkModeOutlinedIcon from "@mui/icons-material/DarkModeOutlined";
-import AssessmentOutlinedIcon from "@mui/icons-material/AssessmentOutlined";
-import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
-import EngineeringOutlinedIcon from "@mui/icons-material/EngineeringOutlined";
-import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import LightModeOutlinedIcon from "@mui/icons-material/LightModeOutlined";
 import LogoutIcon from "@mui/icons-material/Logout";
 import LoginIcon from "@mui/icons-material/Login";
-import SettingsSuggestOutlinedIcon from "@mui/icons-material/SettingsSuggestOutlined";
 import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
 import {
   AppBar,
@@ -15,8 +10,6 @@ import {
   CircularProgress,
   Container,
   IconButton,
-  MenuItem,
-  Select,
   Stack,
   Toolbar,
   Tooltip,
@@ -32,7 +25,7 @@ interface AppShellProps extends PropsWithChildren {
   publicConnected: boolean;
   lastRefresh?: Date;
   onOpenUpload: () => void;
-  projects: Array<{ id: string; name: string }>;
+  projects: Array<{ id: string; name: string; live: boolean }>;
   selectedProjectId?: string;
   onSelectProject: (projectId: string) => void;
 }
@@ -55,17 +48,6 @@ export function AppShell({
   children,
 }: AppShellProps) {
   const auth = useAuth();
-
-  const navigation = [
-    { label: "Overview", href: "#overview", icon: <HomeOutlinedIcon /> },
-    { label: "Digital nameplate", href: "#dpp", icon: <DescriptionOutlinedIcon /> },
-    { label: "Technical data", href: "#dpp", icon: <EngineeringOutlinedIcon /> },
-    { label: "Documents & maintenance", href: "#maintenance", icon: <DescriptionOutlinedIcon /> },
-    { label: "System", href: "#system", icon: <SettingsSuggestOutlinedIcon /> },
-    ...(auth.authenticated
-      ? [{ label: "Live telemetry", href: "#telemetry", icon: <AssessmentOutlinedIcon /> }]
-      : []),
-  ];
 
   return (
     <Box sx={{ minHeight: "100vh" }}>
@@ -168,41 +150,42 @@ export function AppShell({
         </Container>
       </AppBar>
       <Box className="workspace-layout">
-        <Box component="nav" className="workspace-rail" aria-label="Asset workspace navigation">
+        <Box component="nav" className="workspace-rail" aria-label="Asset selection">
           <Typography variant="overline" color="text.secondary" sx={{ px: 1.5, mb: 1 }}>
-            Asset workspace
+            Assets
           </Typography>
-          <Stack spacing={0.5}>
-            {navigation.map((item) => (
-              <Button
-                key={item.href}
-                component="a"
-                href={item.href}
-                variant="text"
-                color="inherit"
-                startIcon={item.icon}
-                sx={{ justifyContent: "flex-start", px: 1.5, py: 1.15, borderRadius: 2 }}
-              >
-                {item.label}
-              </Button>
-            ))}
-          </Stack>
           {projects.length > 0 && (
             <Box className="project-switcher">
-              <Typography variant="caption" color="text.secondary">Active passport</Typography>
-              <Select
-                fullWidth
-                size="small"
-                value={selectedProjectId ?? ""}
-                onChange={(event) => onSelectProject(event.target.value)}
-                aria-label="Select project"
-              >
+              <Typography variant="caption" color="text.secondary">Select an asset</Typography>
+              <Stack spacing={0.75} role="listbox" aria-label="Select project">
                 {projects.map((project) => (
-                  <MenuItem value={project.id} key={project.id}>
-                    {project.name}
-                  </MenuItem>
+                  <Button
+                    key={project.id}
+                    role="option"
+                    aria-selected={project.id === selectedProjectId}
+                    onClick={() => onSelectProject(project.id)}
+                    color="inherit"
+                    sx={{
+                      justifyContent: "flex-start",
+                      textAlign: "left",
+                      px: 1,
+                      py: .75,
+                      borderRadius: 1.5,
+                      backgroundColor: project.id === selectedProjectId ? "rgba(255,255,255,.12)" : "transparent",
+                    }}
+                  >
+                    <Box sx={{ minWidth: 0 }}>
+                      <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
+                        <Typography variant="body2" noWrap>{project.name}</Typography>
+                        {auth.isAdmin && project.live && <StatusBadge label="LIVE" tone="success" />}
+                      </Stack>
+                      <Typography variant="caption" color="text.secondary" noWrap sx={{ display: "block" }}>
+                        Public AAS asset
+                      </Typography>
+                    </Box>
+                  </Button>
                 ))}
-              </Select>
+              </Stack>
               <Typography variant="caption" color="text.secondary">
                 {projects.length} project{projects.length === 1 ? "" : "s"} available
               </Typography>
