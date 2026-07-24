@@ -71,11 +71,11 @@ def rewrite_descriptors(body, public_prefix):
 
 def allow_descriptors(body, allowed_ids):
     if isinstance(body, list):
-        return [item for item in body if item.get("id") in allowed_ids]
+        return [item for item in body if is_public_aas_id(item.get("id", ""))]
     if isinstance(body, dict) and isinstance(body.get("result"), list):
         filtered = dict(body)
         filtered["result"] = [
-            item for item in body["result"] if item.get("id") in allowed_ids
+            item for item in body["result"] if is_public_aas_id(item.get("id", ""))
         ]
         return filtered
     return body
@@ -95,6 +95,24 @@ PUBLIC_AAS_IDS = {
     for value in os.getenv("PUBLIC_AAS_IDS", "").split(",")
     if value.strip()
 }
+PRIVATE_SUBMODEL_PATTERNS = tuple(
+    value.strip().lower()
+    for value in os.getenv(
+        "PRIVATE_SUBMODEL_PATTERNS", "timeseries,telemetry,live"
+    ).split(",")
+    if value.strip()
+)
+
+
+def is_public_aas_id(value):
+    return not PUBLIC_AAS_IDS or value in PUBLIC_AAS_IDS
+
+
+def is_public_submodel_id(value):
+    if PUBLIC_IDS:
+        return value in PUBLIC_IDS
+    lowered = value.lower()
+    return not any(pattern in lowered for pattern in PRIVATE_SUBMODEL_PATTERNS)
 
 
 class Client:
@@ -145,7 +163,7 @@ class Client:
         refs = []
         for ref in shell.get("submodels", []):
             keys = ref.get("keys", [])
-            if any(key.get("value") in PUBLIC_IDS for key in keys):
+            if any(is_public_submodel_id(key.get("value", "")) for key in keys):
                 refs.append(ref)
         shell["submodels"] = refs
         return shell
@@ -155,6 +173,29 @@ class Client:
 
 
 client = Client()
+
+
+def public_registry_ids(path, predicate):
+    body = client.get_registry(
+        "http://aas-registry:8080" if "shell" in path else "http://submodel-registry:8080",
+        path,
+    )
+    items = body.get("result", []) if isinstance(body, dict) else body
+    return [item.get("id") for item in items if predicate(item.get("id", ""))]
+
+
+def public_submodel_ids_from_shells():
+    ids = []
+    seen = set()
+    for shell_id in public_registry_ids("/shell-descriptors", is_public_aas_id):
+        shell = client.get_shell(shell_id)
+        for reference in shell.get("submodels", []):
+            for key in reference.get("keys", []):
+                submodel_id = key.get("value", "")
+                if is_public_submodel_id(submodel_id) and submodel_id not in seen:
+                    seen.add(submodel_id)
+                    ids.append(submodel_id)
+    return ids
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -186,7 +227,13 @@ class Handler(BaseHTTPRequestHandler):
         if clean_path == "/public/submodel-descriptors":
             try:
                 body = client.get_registry("http://submodel-registry:8080", "/submodel-descriptors")
-                body = allow_descriptors(body, PUBLIC_IDS)
+                if isinstance(body, dict) and isinstance(body.get("result"), list):
+                    filtered = dict(body)
+                    filtered["result"] = [
+                        item for item in body["result"]
+                        if is_public_submodel_id(item.get("id", ""))
+                    ]
+                    body = filtered
                 body = rewrite_descriptors(body, "/public/submodels/")
                 self.send_json(200, body)
             except Exception as exc:
@@ -197,7 +244,10 @@ class Handler(BaseHTTPRequestHandler):
             try:
                 self.send_json(200, {
                     "paging_metadata": {},
-                    "result": [client.get_shell(shell_id) for shell_id in PUBLIC_AAS_IDS],
+                    "result": [
+                        client.get_shell(shell_id)
+                        for shell_id in public_registry_ids("/shell-descriptors", is_public_aas_id)
+                    ],
                 })
             except Exception as exc:
                 print(f"Public shell collection read failed: {exc}", flush=True)
@@ -207,7 +257,10 @@ class Handler(BaseHTTPRequestHandler):
             try:
                 self.send_json(200, {
                     "paging_metadata": {},
-                    "result": [client.get_submodel(submodel_id) for submodel_id in PUBLIC_IDS],
+                    "result": [
+                        client.get_submodel(submodel_id)
+                        for submodel_id in public_submodel_ids_from_shells()
+                    ],
                 })
             except Exception as exc:
                 print(f"Public submodel collection read failed: {exc}", flush=True)
@@ -217,7 +270,7 @@ class Handler(BaseHTTPRequestHandler):
         if clean_path.startswith(shell_prefix):
             try:
                 shell_id = decode_id(clean_path[len(shell_prefix):])
-                if shell_id not in PUBLIC_AAS_IDS:
+                if not is_public_aas_id(shell_id):
                     self.send_json(404, {"error": "AAS is not public"})
                     return
                 self.send_json(200, client.get_shell(shell_id))
@@ -231,7 +284,7 @@ class Handler(BaseHTTPRequestHandler):
             return
         try:
             submodel_id = decode_id(clean_path[len(prefix):])
-            if submodel_id not in PUBLIC_IDS:
+            if not is_public_submodel_id(submodel_id):
                 self.send_json(404, {"error": "submodel is not public"})
                 return
             self.send_json(200, client.get_submodel(submodel_id))

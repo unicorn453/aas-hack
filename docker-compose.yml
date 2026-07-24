@@ -143,13 +143,9 @@ services:
       KEYCLOAK_USERNAME: basyx-admin
       KEYCLOAK_PASSWORD: basyx-admin
       PUBLIC_BASE_URL: https://${HOST_ADDRESS}
-      PUBLIC_SUBMODEL_IDS: >-
-        https://example.org/submodels/schunk/pgn-plus-p-64-1/carbonfootprint,
-        https://example.org/submodels/schunk/pgn-plus-p-64-1/technicaldata,
-        https://example.org/submodels/schunk/pgn-plus-p-64-1/nameplate,
-        https://example.org/submodels/schunk/pgn-plus-p-64-1/maintenanceinstructions,
-        https://example.org/submodels/schunk/pgn-plus-p-64-1/handoverdocumentation
-      PUBLIC_AAS_IDS: https://example.org/aas/schunk/pgn-plus-p-64-1
+      PUBLIC_SUBMODEL_IDS: ""
+      PUBLIC_AAS_IDS: ""
+      PRIVATE_SUBMODEL_PATTERNS: timeseries,telemetry,live
     depends_on:
       keycloak:
         condition: service_started

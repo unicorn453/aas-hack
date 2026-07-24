@@ -160,9 +160,25 @@ def register_descriptors(content, token):
     descriptors = aasx_descriptors(content)
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
     for descriptor in descriptors["aas"]:
-        json_request(f"{REGISTRY_BASE}/shell-descriptors", json.dumps(descriptor).encode(), headers)
+        try:
+            json_request(
+                f"{REGISTRY_BASE}/shell-descriptors",
+                json.dumps(descriptor).encode(),
+                headers,
+            )
+        except HTTPError as exc:
+            if exc.code != 409:
+                raise
     for descriptor in descriptors["submodels"]:
-        json_request(f"{SUBMODEL_REGISTRY_BASE}/submodel-descriptors", json.dumps(descriptor).encode(), headers)
+        try:
+            json_request(
+                f"{SUBMODEL_REGISTRY_BASE}/submodel-descriptors",
+                json.dumps(descriptor).encode(),
+                headers,
+            )
+        except HTTPError as exc:
+            if exc.code != 409:
+                raise
     return {"aas": len(descriptors["aas"]), "submodels": len(descriptors["submodels"])}
 
 
@@ -236,8 +252,10 @@ class Handler(BaseHTTPRequestHandler):
             )
             with urlopen(request, timeout=300, context=TLS_CONTEXT) as response:
                 result = response.read()
+                registration = register_descriptors(content, importer_token)
                 self.send_response(response.status)
                 self.send_header("Content-Type", response.headers.get("Content-Type", "application/json"))
+                self.send_header("X-AAS-Registration", json.dumps(registration))
                 self.send_header("Access-Control-Allow-Origin", "*")
                 self.send_header("Content-Length", str(len(result)))
                 self.end_headers()

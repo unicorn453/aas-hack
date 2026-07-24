@@ -27,20 +27,53 @@ body {
   flex: 0 0 224px;
   padding: 28px 16px;
   border-right: 1px solid var(--mui-palette-divider);
-  background: color-mix(in srgb, var(--mui-palette-background-paper) 82%, var(--mui-palette-background-default));
+  background: #182124;
+  color: #ffffff;
   position: sticky;
   top: 82px;
   height: calc(100vh - 82px);
 }
 
 .workspace-rail .MuiButton-root {
-  color: var(--mui-palette-text-secondary);
+  color: #b9c4c5;
 }
 
 .workspace-rail .MuiButton-root:hover,
 .workspace-rail .MuiButton-root:focus-visible {
   color: var(--mui-palette-primary-main);
   background: color-mix(in srgb, var(--mui-palette-primary-main) 10%, transparent);
+}
+
+.workspace-rail .MuiTypography-root {
+  color: #aab7b8;
+}
+
+.workspace-rail .project-switcher .MuiSelect-root {
+  color: #ffffff;
+}
+
+.workspace-rail .project-switcher .MuiOutlinedInput-notchedOutline {
+  border-color: #3b4a4d;
+}
+
+.workspace-rail .project-switcher .MuiSvgIcon-root {
+  color: #b9c4c5;
+}
+
+.project-switcher {
+  display: grid;
+  gap: 8px;
+  margin: 24px 4px 0;
+  padding: 14px;
+  border: 1px solid var(--mui-palette-divider);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--mui-palette-primary-main) 4%, transparent);
+}
+
+.project-switcher .MuiSelect-select {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .rail-note {
@@ -457,7 +490,8 @@ a {
   }
 
   .workspace-rail > .MuiTypography-root,
-  .rail-note {
+  .rail-note,
+  .project-switcher {
     display: none;
   }
 

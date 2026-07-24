@@ -20,6 +20,7 @@ import { securedApi } from "../api/securedApi";
 interface AasxUploadDialogProps {
   open: boolean;
   onClose: () => void;
+  onUploaded: () => void;
 }
 
 function responseSummary(response: unknown): string {
@@ -33,7 +34,7 @@ function responseSummary(response: unknown): string {
   return "The AASX file was accepted by the AAS environment.";
 }
 
-export function AasxUploadDialog({ open, onClose }: AasxUploadDialogProps) {
+export function AasxUploadDialog({ open, onClose, onUploaded }: AasxUploadDialogProps) {
   const auth = useAuth();
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File>();
@@ -63,6 +64,7 @@ export function AasxUploadDialog({ open, onClose }: AasxUploadDialogProps) {
     try {
       const result = await securedApi.uploadAasx(file, await auth.getAccessToken());
       setMessage(responseSummary(result));
+      onUploaded();
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "The AASX upload failed.");
     } finally {

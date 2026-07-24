@@ -23,9 +23,16 @@ function DashboardApplication({
       publicConnected={Boolean(status.asset) || status.submodels.some((item) => item.data)}
       lastRefresh={status.lastRefresh}
       onOpenUpload={() => setUploadOpen(true)}
+      projects={status.projects.map((project) => ({ id: project.id, name: project.asset.name }))}
+      selectedProjectId={status.selectedProjectId}
+      onSelectProject={status.selectProject}
     >
       <DashboardPage publicDpp={status} />
-      <AasxUploadDialog open={uploadOpen} onClose={() => setUploadOpen(false)} />
+      <AasxUploadDialog
+        open={uploadOpen}
+        onClose={() => setUploadOpen(false)}
+        onUploaded={status.retry}
+      />
     </AppShell>
   );
 }

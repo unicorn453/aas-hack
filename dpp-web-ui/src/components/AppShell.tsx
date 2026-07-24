@@ -15,6 +15,8 @@ import {
   CircularProgress,
   Container,
   IconButton,
+  MenuItem,
+  Select,
   Stack,
   Toolbar,
   Tooltip,
@@ -30,6 +32,9 @@ interface AppShellProps extends PropsWithChildren {
   publicConnected: boolean;
   lastRefresh?: Date;
   onOpenUpload: () => void;
+  projects: Array<{ id: string; name: string }>;
+  selectedProjectId?: string;
+  onSelectProject: (projectId: string) => void;
 }
 
 function timeLabel(date?: Date): string {
@@ -44,14 +49,18 @@ export function AppShell({
   publicConnected,
   lastRefresh,
   onOpenUpload,
+  projects,
+  selectedProjectId,
+  onSelectProject,
   children,
 }: AppShellProps) {
   const auth = useAuth();
 
   const navigation = [
     { label: "Overview", href: "#overview", icon: <HomeOutlinedIcon /> },
-    { label: "DPP record", href: "#dpp", icon: <DescriptionOutlinedIcon /> },
-    { label: "Maintenance", href: "#maintenance", icon: <EngineeringOutlinedIcon /> },
+    { label: "Digital nameplate", href: "#dpp", icon: <DescriptionOutlinedIcon /> },
+    { label: "Technical data", href: "#dpp", icon: <EngineeringOutlinedIcon /> },
+    { label: "Documents & maintenance", href: "#maintenance", icon: <DescriptionOutlinedIcon /> },
     { label: "System", href: "#system", icon: <SettingsSuggestOutlinedIcon /> },
     ...(auth.authenticated
       ? [{ label: "Live telemetry", href: "#telemetry", icon: <AssessmentOutlinedIcon /> }]
@@ -90,7 +99,7 @@ export function AppShell({
                 noWrap
                 sx={{ fontWeight: 760, lineHeight: 1.25 }}
               >
-                Schunk PGN+ P 64-1
+                {projects.find((project) => project.id === selectedProjectId)?.name ?? "Digital Product Passport"}
               </Typography>
             </Box>
 
@@ -178,6 +187,27 @@ export function AppShell({
               </Button>
             ))}
           </Stack>
+          {projects.length > 0 && (
+            <Box className="project-switcher">
+              <Typography variant="caption" color="text.secondary">Active passport</Typography>
+              <Select
+                fullWidth
+                size="small"
+                value={selectedProjectId ?? ""}
+                onChange={(event) => onSelectProject(event.target.value)}
+                aria-label="Select project"
+              >
+                {projects.map((project) => (
+                  <MenuItem value={project.id} key={project.id}>
+                    {project.name}
+                  </MenuItem>
+                ))}
+              </Select>
+              <Typography variant="caption" color="text.secondary">
+                {projects.length} project{projects.length === 1 ? "" : "s"} available
+              </Typography>
+            </Box>
+          )}
           {auth.authenticated && <Box className="rail-note">
             <Typography variant="caption" color="text.secondary">
               Read-only DPP workspace

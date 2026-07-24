@@ -53,13 +53,13 @@ export function DashboardPage({ publicDpp }: DashboardPageProps) {
               </Typography>
               <Typography color="text.secondary" sx={{ mt: 1, maxWidth: 710 }}>
                 Explore the machine-readable identity, specifications and lifecycle
-                documents exposed through the anonymous read-only facade.
+                documents for the selected project through the public read-only facade.
               </Typography>
             </Box>
             {!publicDpp.loading && (
               <StatusBadge
-                label={`${availableCount} of 5 submodels available`}
-                tone={availableCount === 5 ? "success" : availableCount ? "warning" : "error"}
+                label={`${availableCount} submodel${availableCount === 1 ? "" : "s"} available`}
+                tone={availableCount ? "success" : "error"}
                 size="medium"
               />
             )}
