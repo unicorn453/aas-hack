@@ -368,6 +368,7 @@ services:
       EDC_DATAPLANE_API_PUBLIC_BASEURL: https://${HOST_ADDRESS}:19291/api/public
       EDC_VAULT_HASHICORP_URL: http://vault:8200
       EDC_VAULT_HASHICORP_TOKEN: root
+      OTEL_SDK_DISABLED: "true"
     volumes:
       - ./config/_files/edc-dataplane.properties/application.properties:/app/configuration.properties:ro
 

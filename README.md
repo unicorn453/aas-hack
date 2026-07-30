@@ -68,14 +68,23 @@ curl -k https://$HOST_ADDRESS:19191/api/dsp
 curl -k https://$HOST_ADDRESS:19291/api/public
 ```
 
-4. Publish your AAS descriptors to a partner server so they can discover your shells:
+4. Discover shell offers from a partner server through EDC catalog only
+   (no direct shell-descriptor push):
 
 ```bash
-python3 tools/register_remote.py --partner-url https://<partner-ip>
+python3 tools/search_shells_via_edc.py --provider-url https://<partner-ip>
 ```
 
-5. Remove them again when needed:
+5. Optional: inspect the full catalog payload when debugging:
 
 ```bash
-python3 tools/register_remote.py --partner-url https://<partner-ip> --deregister
+python3 tools/search_shells_via_edc.py --provider-url https://<partner-ip> --raw
 ```
+
+Notes:
+- This flow queries the partner through DSP via your local control plane
+  management API (`/api/management/v3/catalog/request`).
+- The default local management endpoint is `http://localhost:19193/api/management`
+  with API key `password` (override via `--management-url` and `--api-key`).
+- If provider values differ, override with `--provider-dsp-url` and
+  `--provider-participant-id`.
