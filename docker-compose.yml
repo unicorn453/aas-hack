@@ -331,7 +331,7 @@ services:
       - edc-network
 
   edc-controlplane:
-    image: tractusx/edc-controlplane-postgresql-hashicorp-vault:latest
+    image: tractusx/edc-controlplane-postgresql-hashicorp-vault:0.7.3
     container_name: edc-controlplane
     restart: always
     depends_on:
@@ -351,7 +351,7 @@ services:
       - edc-network
 
   edc-dataplane:
-    image: tractusx/edc-dataplane-hashicorp-vault:latest
+    image: tractusx/edc-dataplane-hashicorp-vault:0.7.3
     container_name: edc-dataplane
     restart: always
     depends_on:
