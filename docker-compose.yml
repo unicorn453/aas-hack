@@ -232,6 +232,22 @@ services:
       submodel-registry:
         condition: service_started
 
+  aas-discovery:
+    image: eclipsebasyx/aas-discovery:2.0.0-milestone-10
+    container_name: aas-discovery
+    environment:
+      - SERVER_PORT=8083
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=edc
+      - POSTGRES_PASSWORD=edc
+      - POSTGRES_DBNAME=edc
+    ports:
+      - '8083:8083'
+    depends_on:
+      aas-env:
+        condition: service_started
+
   aas-web-ui:
     image: eclipsebasyx/aas-gui:SNAPSHOT
     container_name: aas-web-ui

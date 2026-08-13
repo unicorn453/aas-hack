@@ -115,7 +115,7 @@ def main() -> int:
         },
     }
 
-    endpoint = args.management_url.rstrip("/") + "/v3/catalog/request"
+    endpoint = args.management_url.rstrip("/") + "/v2/catalog/request"
     headers = {
         "Content-Type": "application/json",
         "X-Api-Key": args.api_key,
