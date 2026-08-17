@@ -79,10 +79,12 @@ def _post_catalog_request(endpoints: list[str], headers: dict, payload: dict):
     """Try known endpoint variants until one succeeds or all fail."""
     last_response = None
     last_endpoint = None
+    errors = []
     for endpoint in endpoints:
         try:
             response = requests.post(endpoint, headers=headers, json=payload, timeout=30, verify=False)
-        except requests.RequestException:
+        except requests.RequestException as exc:
+            errors.append((endpoint, f"{exc.__class__.__name__}: {exc}"))
             continue
 
         last_response = response
@@ -97,7 +99,7 @@ def _post_catalog_request(endpoints: list[str], headers: dict, payload: dict):
         # For auth or server errors, return immediately to preserve useful diagnostics.
         return endpoint, response
 
-    return last_endpoint, last_response
+    return last_endpoint, last_response, errors
 
 
 def _provider_host(provider_url: str) -> str:
@@ -199,12 +201,16 @@ def main() -> int:
         "X-Api-Key": args.api_key,
     }
 
-    endpoint, response = _post_catalog_request(endpoints, headers, payload)
+    endpoint, response, errors = _post_catalog_request(endpoints, headers, payload)
     if response is None:
         print("Catalog request failed: no reachable management endpoint candidates")
         print("Tried:")
         for candidate in endpoints:
             print(f"  - {candidate}")
+        if errors:
+            print("Connection errors:")
+            for failing_endpoint, message in errors:
+                print(f"  - {failing_endpoint} -> {message}")
         return 1
 
     if response.status_code >= 400:
