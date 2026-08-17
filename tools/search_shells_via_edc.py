@@ -22,6 +22,84 @@ import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
+def _candidate_catalog_endpoints(management_url: str) -> list[str]:
+    """Return likely catalog request endpoints for different EDC API layouts."""
+    base = management_url.rstrip("/")
+    candidates = [
+        f"{base}/v3/catalog/request",
+        f"{base}/catalog/request",
+    ]
+
+    # If caller passed /api/management, also try /management variants.
+    if base.endswith("/api/management"):
+        root = base[: -len("/api/management")]
+        candidates.extend(
+            [
+                f"{root}/management/v3/catalog/request",
+                f"{root}/management/catalog/request",
+                f"{root}/v3/catalog/request",
+                f"{root}/catalog/request",
+            ]
+        )
+
+    # If caller passed /management, also try /api/management variants.
+    if base.endswith("/management") and not base.endswith("/api/management"):
+        root = base[: -len("/management")]
+        candidates.extend(
+            [
+                f"{root}/api/management/v3/catalog/request",
+                f"{root}/api/management/catalog/request",
+                f"{root}/v3/catalog/request",
+                f"{root}/catalog/request",
+            ]
+        )
+
+    # Some users pass the host root instead of /api/management.
+    if not base.endswith("/api/management") and not base.endswith("/management"):
+        candidates.extend(
+            [
+                f"{base}/api/management/v3/catalog/request",
+                f"{base}/api/management/catalog/request",
+                f"{base}/management/v3/catalog/request",
+                f"{base}/management/catalog/request",
+            ]
+        )
+
+    # Keep order stable while deduplicating.
+    seen = set()
+    unique = []
+    for url in candidates:
+        if url not in seen:
+            seen.add(url)
+            unique.append(url)
+    return unique
+
+
+def _post_catalog_request(endpoints: list[str], headers: dict, payload: dict):
+    """Try known endpoint variants until one succeeds or all fail."""
+    last_response = None
+    last_endpoint = None
+    for endpoint in endpoints:
+        try:
+            response = requests.post(endpoint, headers=headers, json=payload, timeout=30, verify=False)
+        except requests.RequestException:
+            continue
+
+        last_response = response
+        last_endpoint = endpoint
+        if response.status_code < 400:
+            return endpoint, response
+
+        # 404/405 usually means wrong path on this deployment; try next candidate.
+        if response.status_code in (404, 405):
+            continue
+
+        # For auth or server errors, return immediately to preserve useful diagnostics.
+        return endpoint, response
+
+    return last_endpoint, last_response
+
+
 def _provider_host(provider_url: str) -> str:
     parsed = urlparse(provider_url)
     if not parsed.hostname:
@@ -115,17 +193,26 @@ def main() -> int:
         },
     }
 
-    endpoint = args.management_url.rstrip("/") + "/v2/catalog/request"
+    endpoints = _candidate_catalog_endpoints(args.management_url)
     headers = {
         "Content-Type": "application/json",
         "X-Api-Key": args.api_key,
     }
 
-    response = requests.post(endpoint, headers=headers, json=payload, timeout=30, verify=False)
+    endpoint, response = _post_catalog_request(endpoints, headers, payload)
+    if response is None:
+        print("Catalog request failed: no reachable management endpoint candidates")
+        print("Tried:")
+        for candidate in endpoints:
+            print(f"  - {candidate}")
+        return 1
+
     if response.status_code >= 400:
-        print(f"Catalog request failed: HTTP {response.status_code}")
+        print(f"Catalog request failed at {endpoint}: HTTP {response.status_code}")
         print(response.text)
         return 1
+
+    print(f"Catalog request succeeded via {endpoint}")
 
     catalog = response.json()
     if args.raw:
