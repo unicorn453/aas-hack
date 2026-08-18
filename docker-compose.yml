@@ -83,6 +83,9 @@ services:
     depends_on:
       keycloak-db:
         condition: service_healthy
+    networks:
+      - default
+      - edc-network
 
   mqtt-broker:
     image: eclipse-mosquitto:2
