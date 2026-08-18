@@ -10,7 +10,7 @@
   "dataAddress": {
     "@type": "DataAddress",
     "type": "HttpData",
-    "baseUrl": "https://172.17.250.20/shells",
+    "baseUrl": "https://172.17.255.170/shells",
     "proxyPath": "true",
     "proxyQueryParams": "true",
     "proxyMethod": "true"

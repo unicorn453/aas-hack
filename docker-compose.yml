@@ -314,6 +314,7 @@ services:
       POSTGRES_PASSWORD: edc
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      - ./config/_files/edc-init/edc-schema.sql:/edc-schema.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 10s
@@ -342,7 +343,8 @@ services:
       retries: 10
     volumes:
       - ./config/_files/vault_init.sh:/vault-init.sh
-    entrypoint: ["/bin/sh", "-c", "sh /vault-init.sh & vault server -dev"]
+      - ./config/certs:/vault/keys:ro
+    entrypoint: ["/bin/sh", "-c", "vault server -dev & sleep 5 && sh /vault-init.sh; wait"]
     networks:
       - edc-network
 
@@ -365,6 +367,8 @@ services:
     volumes:
       - ./config/_files/edc-controlplane.properties/application.properties:/app/configuration.properties:ro
       - ./config/_files/rules/edc_controlplane_rbac_rules.json:/application/rbac_rules.json:ro
+    environment:
+      OTEL_SDK_DISABLED: "true"
     networks:
       - edc-network
 
@@ -383,7 +387,7 @@ services:
       WEB_HTTP_PUBLIC_HOST: 0.0.0.0
       WEB_HTTP_PUBLIC_PORT: 19291
       WEB_HTTP_PUBLIC_PATH: /api/public
-      EDC_DATAPLANE_API_PUBLIC_BASEURL: https://${HOST_ADDRESS}:19291/api/public
+      EDC_DATAPLANE_API_PUBLIC_BASEURL: http://${HOST_ADDRESS}:19291/api/public
       EDC_VAULT_HASHICORP_URL: http://vault:8200
       EDC_VAULT_HASHICORP_TOKEN: root
       OTEL_SDK_DISABLED: "true"

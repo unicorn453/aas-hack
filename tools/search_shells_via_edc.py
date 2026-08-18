@@ -90,14 +90,14 @@ def _post_catalog_request(endpoints: list[str], headers: dict, payload: dict):
         last_response = response
         last_endpoint = endpoint
         if response.status_code < 400:
-            return endpoint, response
+            return endpoint, response, errors
 
         # 404/405 usually means wrong path on this deployment; try next candidate.
         if response.status_code in (404, 405):
             continue
 
         # For auth or server errors, return immediately to preserve useful diagnostics.
-        return endpoint, response
+        return endpoint, response, errors
 
     return last_endpoint, last_response, errors
 
@@ -111,9 +111,10 @@ def _provider_host(provider_url: str) -> str:
 
 def _provider_dsp_url(provider_url: str) -> str:
     parsed = urlparse(provider_url)
-    if not parsed.scheme or not parsed.hostname:
+    if not parsed.hostname:
         raise ValueError(f"Invalid provider URL: {provider_url}")
-    return f"{parsed.scheme}://{parsed.hostname}:19191/api/dsp"
+    # In this stack the DSP endpoint runs on the connector's HTTP context on 19191.
+    return f"http://{parsed.hostname}:19191/api/dsp"
 
 
 def _provider_participant_id(provider_url: str) -> str:
