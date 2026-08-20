@@ -22,6 +22,17 @@ import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
+def _validate_http_url(label: str, value: str) -> str:
+    candidate = (value or "").strip()
+    parsed = urlparse(candidate)
+    if parsed.scheme not in ("http", "https") or not parsed.hostname:
+        raise ValueError(
+            f"Invalid {label}: {value!r}. Expected absolute http(s) URL, "
+            "for example https://<partner-ip>:19191/api/dsp"
+        )
+    return candidate
+
+
 def _candidate_catalog_endpoints(management_url: str) -> list[str]:
     """Return likely catalog request endpoints for different EDC API layouts."""
     base = management_url.rstrip("/")
@@ -113,12 +124,20 @@ def _provider_dsp_url(provider_url: str) -> str:
     parsed = urlparse(provider_url)
     if not parsed.hostname:
         raise ValueError(f"Invalid provider URL: {provider_url}")
-    # In this stack the DSP endpoint runs on the connector's HTTP context on 19191.
-    return f"http://{parsed.hostname}:19191/api/dsp"
+    # In this stack the DSP endpoint runs on port 19191.
+    scheme = parsed.scheme or "http"
+    return f"{scheme}://{parsed.hostname}:19191/api/dsp"
 
 
 def _provider_participant_id(provider_url: str) -> str:
     return f"did:web:{_provider_host(provider_url)}"
+
+
+def _validate_participant_id(participant_id: str) -> str:
+    candidate = (participant_id or "").strip()
+    if not candidate:
+        raise ValueError("Invalid provider participant id: empty value")
+    return candidate
 
 
 def _collect_dataset_nodes(node):
@@ -180,8 +199,17 @@ def main() -> int:
     parser.add_argument("--raw", action="store_true", help="Print raw catalog response JSON")
     args = parser.parse_args()
 
-    provider_dsp_url = args.provider_dsp_url or _provider_dsp_url(args.provider_url)
-    provider_participant_id = args.provider_participant_id or _provider_participant_id(args.provider_url)
+    try:
+        provider_dsp_url = _validate_http_url(
+            "provider DSP URL",
+            args.provider_dsp_url if args.provider_dsp_url is not None else _provider_dsp_url(args.provider_url),
+        )
+        provider_participant_id = _validate_participant_id(
+            args.provider_participant_id if args.provider_participant_id is not None else _provider_participant_id(args.provider_url)
+        )
+    except ValueError as exc:
+        print(str(exc))
+        return 2
 
     payload = {
         "@context": {"@vocab": "https://w3id.org/edc/v0.0.1/ns/"},

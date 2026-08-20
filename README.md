@@ -88,3 +88,16 @@ Notes:
   with API key `password` (override via `--management-url` and `--api-key`).
 - If provider values differ, override with `--provider-dsp-url` and
   `--provider-participant-id`.
+
+Troubleshooting:
+- If EDC logs `Invalid URL host: ""` during catalog requests, one of the DSP URLs is empty or malformed.
+  Check your CLI values and ensure `HOST_ADDRESS` is set by running `python3 setup_local_ip.py` before
+  `docker compose up -d`.
+- If EDC logs DIM/BDRS token refresh errors or `No setting found for key edc.iam.sts.dim.url`, recreate the EDC
+  containers after changing the mounted properties.
+- For local testing, this repository starts small `dim-mock` and `bdrs-mock` services that answer the DIM/BDRS
+  requests the EDC extensions expect, while Keycloak still serves the OAuth token endpoint used by the rest of the stack.
+- The local DID document is served by nginx at `/.well-known/did.json`; rerun `python3 setup_local_ip.py` after your
+  IP changes so the generated nginx config keeps the DID host in sync.
+- The EDC containers now trust `config/certs/server.crt` directly through `JAVA_TOOL_OPTIONS`, so recreate the control
+  plane and data plane after cert or IP changes.

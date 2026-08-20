@@ -1,0 +1,149 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: postgres-secondary
+    restart: always
+    environment:
+      POSTGRES_DB: edc-secondary
+      POSTGRES_USER: edc-user
+      POSTGRES_PASSWORD: edc
+    volumes:
+      - postgres-secondary-data:/var/lib/postgresql/data
+      - ./config/_files/edc-init/edc-schema.sql:/edc-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      start_period: 20s
+      retries: 10
+    networks:
+      - edc-network
+
+  vault:
+    image: hashicorp/vault:1.16
+    container_name: vault-secondary
+    ports:
+      - "28200:8200"
+    cap_add:
+      - IPC_LOCK
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: root
+      VAULT_DEV_LISTEN_ADDRESS: 0.0.0.0:8200
+    command: server -dev
+    healthcheck:
+      test: ["CMD", "vault", "status", "-address=http://127.0.0.1:8200"]
+      interval: 10s
+      timeout: 5s
+      start_period: 15s
+      retries: 10
+    volumes:
+      - ./config/_files/vault_init.sh:/vault-init.sh
+      - ./config/certs:/vault/keys:ro
+    entrypoint: ["/bin/sh", "-c", "vault server -dev & sleep 5 && sh /vault-init.sh; wait"]
+    networks:
+      - edc-network
+
+  edc-controlplane:
+    image: tractusx/edc-controlplane-postgresql-hashicorp-vault:0.7.3
+    container_name: edc-controlplane-secondary
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+      vault:
+        condition: service_healthy
+      edc-dataplane:
+        condition: service_started
+    ports:
+      - "29191:19191"
+      - "29192:19192"
+      - "29193:19193"
+      - "29194:19194"
+    volumes:
+      - ./config/_files/edc-controlplane.properties/application.secondary.properties:/app/configuration.properties:ro
+      - ./config/_files/rules/edc_controlplane_rbac_rules.json:/application/rbac_rules.json:ro
+      - ./config/certs:/app/certs:ro
+    environment:
+      OTEL_SDK_DISABLED: "true"
+      EDC_IAM_STS_DIM_URL: http://dim-mock-secondary:9080/auth/realms/basyx/protocol/openid-connect/token
+      EDC_IAM_STS_BDRS_URL: http://bdrs-mock-secondary:9081/auth/realms/basyx/protocol/openid-connect/token
+      EDC_IAM_STS_OAUTH_URL: http://keycloak:8080/auth/realms/basyx/protocol/openid-connect/token
+    networks:
+      - edc-network
+
+  edc-dataplane:
+    image: tractusx/edc-dataplane-hashicorp-vault:0.7.3
+    container_name: edc-dataplane-secondary
+    restart: always
+    depends_on:
+      vault:
+        condition: service_healthy
+    networks:
+      - edc-network
+    ports:
+      - "29291:19291"
+    environment:
+      WEB_HTTP_PUBLIC_HOST: 0.0.0.0
+      WEB_HTTP_PUBLIC_PORT: 19291
+      WEB_HTTP_PUBLIC_PATH: /api/public
+      EDC_DATAPLANE_API_PUBLIC_BASEURL: http://${HOST_ADDRESS}:29291/api/public
+      EDC_VAULT_HASHICORP_URL: http://vault:8200
+      EDC_VAULT_HASHICORP_TOKEN: root
+      OTEL_SDK_DISABLED: "true"
+    volumes:
+      - ./config/_files/edc-dataplane.properties/application.secondary.properties:/app/configuration.properties:ro
+
+  edc-init:
+    image: curlimages/curl:8.9.1
+    container_name: edc-init-secondary
+    depends_on:
+      edc-controlplane:
+        condition: service_started
+    restart: "no"
+    command: ["sh", "/init/init_edc.sh"]
+    volumes:
+      - ./config/_files/init_edc.sh:/init/init_edc.sh:ro
+      - ./config/_files/edc-init:/config:ro
+    networks:
+      - edc-network
+
+  dim-mock:
+    image: python:3.12-slim
+    container_name: dim-mock-secondary
+    restart: always
+    command: ["python", "/app/dim_mock.py"]
+    volumes:
+      - ./services/dim-mock/dim_mock.py:/app/dim_mock.py:ro
+    ports:
+      - "28080:9080"
+    environment:
+      PORT: "9080"
+      MOCK_NAME: DIM
+    networks:
+      - edc-network
+
+  bdrs-mock:
+    image: python:3.12-slim
+    container_name: bdrs-mock-secondary
+    restart: always
+    command:
+    - sh
+    - -c
+    - |
+      pip install --no-cache-dir PyJWT
+      python /app/bdrs_mock.py
+    volumes:
+      - ./services/bdrs-mock/bdrs_mock.py:/app/bdrs_mock.py:ro
+    ports:
+      - "28081:9081"
+    environment:
+      PORT: "9081"
+      MOCK_NAME: BDRS
+    networks:
+      - edc-network
+
+volumes:
+  postgres-secondary-data:
+
+networks:
+  edc-network:

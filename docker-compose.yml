@@ -87,6 +87,43 @@ services:
       - default
       - edc-network
 
+  dim-mock:
+    image: python:3.12-slim
+    container_name: dim-mock
+    restart: always
+    command: ["python", "/app/dim_mock.py"]
+    volumes:
+      - ./services/dim-mock/dim_mock.py:/app/dim_mock.py:ro
+    ports:
+      - "18080:8080"
+    environment:
+      PORT: "8080"
+      MOCK_NAME: DIM
+      DID_WEB: did:web:${HOST_ADDRESS}
+    networks:
+      - edc-network
+
+  bdrs-mock:
+    image: python:3.12-slim
+    container_name: bdrs-mock
+    restart: always
+    command:
+    - sh
+    - -c
+    - |
+      pip install --no-cache-dir PyJWT
+      python /app/bdrs_mock.py
+    volumes:
+      - ./services/bdrs-mock/bdrs_mock.py:/app/bdrs_mock.py:ro
+    ports:
+      - "18081:8081"
+    environment:
+      PORT: "8081"
+      MOCK_NAME: BDRS
+      DID_WEB: did:web:${HOST_ADDRESS}
+    networks:
+      - edc-network
+
   mqtt-broker:
     image: eclipse-mosquitto:2
     container_name: mqtt-broker
@@ -370,8 +407,22 @@ services:
     volumes:
       - ./config/_files/edc-controlplane.properties/application.properties:/app/configuration.properties:ro
       - ./config/_files/rules/edc_controlplane_rbac_rules.json:/application/rbac_rules.json:ro
+      - ./config/certs:/etc/edc-certs:ro
+
     environment:
       OTEL_SDK_DISABLED: "true"
+
+      JAVA_TOOL_OPTIONS: >-
+        -Xms512m
+        -Xmx1024m
+        -Djavax.net.ssl.trustStore=/etc/edc-certs/truststore.jks
+        -Djavax.net.ssl.trustStorePassword=changeit
+        -Djavax.net.ssl.trustStoreType=JKS
+
+
+      EDC_IAM_STS_DIM_URL: http://dim-mock:8080/auth/realms/basyx/protocol/openid-connect/token
+      TX_EDC_IAM_DCP_BDRS_SERVER_URL: http://bdrs-mock:8081
+      TX_IAM_IATP_BDRS_SERVER_URL: http://bdrs-mock:8081
     networks:
       - edc-network
 
@@ -390,12 +441,21 @@ services:
       WEB_HTTP_PUBLIC_HOST: 0.0.0.0
       WEB_HTTP_PUBLIC_PORT: 19291
       WEB_HTTP_PUBLIC_PATH: /api/public
+      JAVA_TOOL_OPTIONS: >-
+       -Xms512m
+       -Xmx1024m
+       -Djavax.net.ssl.trustStore=/etc/edc-certs/truststore.jks
+       -Djavax.net.ssl.trustStorePassword=changeit
+       -Djavax.net.ssl.trustStoreType=JKS
+      EDC_IAM_STS_DIM_URL: http://dim-mock:8080/auth/realms/basyx/protocol/openid-connect/token
+      TX_EDC_IAM_DCP_BDRS_SERVER_URL: http://bdrs-mock:8081
       EDC_DATAPLANE_API_PUBLIC_BASEURL: http://${HOST_ADDRESS}:19291/api/public
       EDC_VAULT_HASHICORP_URL: http://vault:8200
       EDC_VAULT_HASHICORP_TOKEN: root
       OTEL_SDK_DISABLED: "true"
     volumes:
       - ./config/_files/edc-dataplane.properties/application.properties:/app/configuration.properties:ro
+      - ./config/certs:/etc/edc-certs:ro
 
   edc-init:
     image: curlimages/curl:8.9.1

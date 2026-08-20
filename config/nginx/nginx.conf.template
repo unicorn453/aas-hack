@@ -20,6 +20,11 @@ server {
     ssl_protocols       TLSv1.2 TLSv1.3;
     ssl_ciphers         HIGH:!aNULL:!MD5;
 
+    location = /.well-known/did.json {
+        default_type application/json;
+        return 200 '{"@context":["https://www.w3.org/ns/did/v1"],"id":"did:web:__HOST_ADDRESS__","service":[{"id":"#credentialService","type":"CredentialService","serviceEndpoint":"http://bdrs-mock:8081"}]}';
+    }
+
     # React AAS DPP frontend
     location / {
         proxy_pass         https://dpp-web-ui:443;
