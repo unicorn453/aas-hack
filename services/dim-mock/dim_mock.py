@@ -82,7 +82,7 @@ class Handler(BaseHTTPRequestHandler):
             # IMPORTANT:
             # grantAccess MUST be a STRING for this EDC version.
             response = {
-                "grantAccess": jwt
+                "jwt": jwt
             }
 
             print(

@@ -6,6 +6,7 @@ import os
 import sys
 import time
 import jwt as pyjwt  # pip install pyjwt
+import gzip
 
 DID_WEB = os.getenv("DID_WEB", "did:web:172.17.255.170")
 MOCK_SIGNING_KEY = os.getenv("MOCK_SIGNING_KEY", "dev-only-shared-secret")
@@ -85,6 +86,22 @@ class Handler(BaseHTTPRequestHandler):
 
     def log_message(self, format, *args):
         return
+
+    def do_GET(self):
+        if self.path == "/bpn-directory":
+            directory = {
+                "did:web:{HOST_ADDRESS}": "did:web:{HOST_ADDRESS}",
+            }
+            payload = gzip.compress(json.dumps(directory).encode("utf-8"))
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Encoding", "gzip")
+            self.send_header("Content-Length", str(len(payload)))
+            self.end_headers()
+            self.wfile.write(payload)
+            return
+
+        self.send_json(404, {"error": "not_found"})
 
 
 if __name__ == "__main__":
