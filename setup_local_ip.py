@@ -91,7 +91,7 @@ def ensure_cert(ip):
                 "openssl", "req", "-x509", "-newkey", "rsa:4096", "-sha256", "-days", "3650", "-nodes",
                 "-keyout", str(key), "-out", str(crt),
                 "-subj", f"/CN={ip}",
-                "-addext", f"subjectAltName=IP:{ip}",
+                "-addext", f"subjectAltName=IP:{ip},DNS:localhost",
             ],
             check=True, capture_output=True,
         )
