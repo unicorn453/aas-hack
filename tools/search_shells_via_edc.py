@@ -7,8 +7,11 @@ It asks your local EDC control plane to query a remote partner catalog,
 then prints catalog datasets that look like AAS shell endpoints.
 
 Examples:
-  python3 tools/search_shells_via_edc.py --provider-url https://192.168.56.20
-  python3 tools/search_shells_via_edc.py --provider-url https://192.168.56.20 --raw
+  python3 tools/search_shells_via_edc.py --provider-url http://192.168.56.20
+  python3 tools/search_shells_via_edc.py --provider-url http://192.168.56.20 --raw
+
+For this repo, the provider DSP endpoint is commonly plain HTTP on port 19191,
+so use http://... unless your deployment explicitly exposes HTTPS.
 """
 
 import argparse
@@ -124,8 +127,8 @@ def _provider_dsp_url(provider_url: str) -> str:
     parsed = urlparse(provider_url)
     if not parsed.hostname:
         raise ValueError(f"Invalid provider URL: {provider_url}")
-    # In this stack the DSP endpoint runs on port 19191.
-    scheme = parsed.scheme or "http"
+    # In this stack the DSP endpoint is expected to be HTTPS on port 19191.
+    scheme = parsed.scheme or "https"
     return f"{scheme}://{parsed.hostname}:19191/api/dsp"
 
 
@@ -174,7 +177,7 @@ def _summary_line(dataset: dict) -> str:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--provider-url", required=True, help="Partner base URL, e.g. https://192.168.56.20")
+    parser.add_argument("--provider-url", required=True, help="Partner base URL, e.g. http://192.168.56.20 (or https://... if the provider exposes TLS)")
     parser.add_argument(
         "--management-url",
         default="http://localhost:19193/api/management",
@@ -244,6 +247,11 @@ def main() -> int:
 
     if response.status_code >= 400:
         print(f"Catalog request failed at {endpoint}: HTTP {response.status_code}")
+        if response.status_code in (404, 405):
+            print("This often means the remote counterparty DSP URL is wrong, not that the local management API is broken.")
+            print("Try overriding the remote provider endpoint explicitly, for example:")
+            print("  --provider-url http://192.168.1.241")
+            print("  --provider-dsp-url http://192.168.1.241:19191/api/dsp")
         print(response.text)
         return 1
 

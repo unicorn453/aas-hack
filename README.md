@@ -86,6 +86,8 @@ Notes:
   management API (`/api/management/v3/catalog/request`).
 - The default local management endpoint is `http://localhost:19193/api/management`
   with API key `password` (override via `--management-url` and `--api-key`).
+- The provider DSP endpoint is expected to be HTTPS on port 19191:
+  `https://<partner-ip>:19191/api/dsp`.
 - If provider values differ, override with `--provider-dsp-url` and
   `--provider-participant-id`.
 
@@ -93,6 +95,10 @@ Troubleshooting:
 - If EDC logs `Invalid URL host: ""` during catalog requests, one of the DSP URLs is empty or malformed.
   Check your CLI values and ensure `HOST_ADDRESS` is set by running `python3 setup_local_ip.py` before
   `docker compose up -d`.
+- If you see `TLS connect error: wrong version number` or `HTTP 404 Not Found` on `/api/dsp`, the provider is
+  probably not serving the DSP endpoint with the expected TLS certificate and path. Ensure the EDC containers were
+  recreated after generating the certs, and then use `https://<partner-ip>:19191/api/dsp` or override
+  `--provider-dsp-url` explicitly.
 - If EDC logs DIM/BDRS token refresh errors or `No setting found for key edc.iam.sts.dim.url`, recreate the EDC
   containers after changing the mounted properties.
 - For local testing, this repository starts small `dim-mock` and `bdrs-mock` services that answer the DIM/BDRS

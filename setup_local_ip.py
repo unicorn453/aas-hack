@@ -78,9 +78,10 @@ def ensure_cert(ip):
     certs_dir.mkdir(exist_ok=True)
     crt, key = certs_dir / "server.crt", certs_dir / "server.key"
     public_key, private_key = certs_dir / "transfer-public.pem", certs_dir / "transfer-private.pem"
-  
+    keystore = certs_dir / "edc-keystore.p12"
+    truststore = certs_dir / "truststore.jks"
 
-    if crt.exists() and key.exists() and public_key.exists() and private_key.exists() and cert_matches_ip(crt, ip):
+    if crt.exists() and key.exists() and public_key.exists() and private_key.exists() and keystore.exists() and truststore.exists() and cert_matches_ip(crt, ip):
         print(f"[certs] already valid for {ip}, skipping")
         return
 
@@ -96,11 +97,35 @@ def ensure_cert(ip):
         )
         subprocess.run(["openssl", "genrsa", "-out", str(certs_dir / "transfer-private.pem"), "4096"], check=True)
         subprocess.run(["openssl", "rsa", "-in", str(certs_dir / "transfer-private.pem"), "-pubout", "-out", str(certs_dir / "transfer-public.pem")], check=True)
-        print(f"[certs] generated certs/server.crt for {ip}")
+        subprocess.run(
+            [
+                "openssl", "pkcs12", "-export",
+                "-out", str(keystore),
+                "-inkey", str(key),
+                "-in", str(crt),
+                "-password", "pass:changeit",
+                "-name", "edc",
+            ],
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            [
+                "keytool", "-importcert", "-noprompt",
+                "-alias", "edc-local",
+                "-file", str(crt),
+                "-keystore", str(truststore),
+                "-storepass", "changeit",
+            ],
+            check=True,
+            capture_output=True,
+        )
+        print(f"[certs] generated TLS keystore/truststore for {ip}")
     except FileNotFoundError:
-        print("[certs] openssl not found on PATH - generate certs/server.crt manually, see README")
+        print("[certs] openssl or keytool not found on PATH - generate certs/server.crt manually, see README")
     except subprocess.CalledProcessError as e:
-        print(f"[certs] openssl failed: {e.stderr.decode().strip()}")
+        stderr = (e.stderr or b"").decode().strip() or (e.stdout or b"").decode().strip()
+        print(f"[certs] certificate generation failed: {stderr}")
 
 
 def main():
