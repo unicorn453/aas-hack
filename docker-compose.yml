@@ -121,6 +121,29 @@ services:
       aas-env:
         condition: service_started
 
+  mqtt-aas-subscriber-ilr:
+    build:
+      context: ./services/mqtt-integration/mqtt-aas-subscriber
+      network: host
+    container_name: mqtt-aas-subscriber-ilr
+    restart: always
+    environment:
+      MQTT_BROKER_HOST: ${MQTT_BROKER_HOST:-mqtt-broker}
+      MQTT_BROKER_PORT: "1883"
+      MQTT_TOPIC: factory/ilr-performance-plus/telemetry
+      AAS_BASE_URL: http://aas-env:8081
+      KEYCLOAK_URL: http://keycloak:8080/auth
+      KEYCLOAK_USERNAME: basyx-admin
+      KEYCLOAK_PASSWORD: basyx-admin
+      AAS_VERIFY_TLS: "true"
+      AAS_ID: https://example.org/ilr/ilr-performance-plus-live
+      TIMESERIES_ID: https://example.org/ilr/ilr-performance-plus-live/sm/TimeSeries
+    depends_on:
+      keycloak:
+        condition: service_started
+      aas-env:
+        condition: service_started
+
   mqtt-publisher:
     build:
       context: ./services/simulation/mqtt-publisher
@@ -273,9 +296,9 @@ services:
       context: ./services/dpp-web-ui
       network: host
       args:
-        VITE_PUBLIC_API_BASE: ${VITE_PUBLIC_API_BASE:-https://${HOST_ADDRESS:-172.17.251.203}/public}
-        VITE_SECURED_API_BASE: ${VITE_SECURED_API_BASE:-https://${HOST_ADDRESS:-172.17.251.203}}
-        VITE_KEYCLOAK_URL: ${VITE_KEYCLOAK_URL:-https://${HOST_ADDRESS:-172.17.251.203}/auth}
+        VITE_PUBLIC_API_BASE: ${VITE_PUBLIC_API_BASE:-https://${HOST_ADDRESS:-localhost}/public}
+        VITE_SECURED_API_BASE: ${VITE_SECURED_API_BASE:-https://${HOST_ADDRESS:-localhost}}
+        VITE_KEYCLOAK_URL: ${VITE_KEYCLOAK_URL:-https://${HOST_ADDRESS:-localhost}/auth}
         VITE_KEYCLOAK_REALM: ${VITE_KEYCLOAK_REALM:-basyx}
         VITE_KEYCLOAK_CLIENT_ID: ${VITE_KEYCLOAK_CLIENT_ID:-basyx-web}
         VITE_AAS_ID: ${VITE_AAS_ID:-https://example.org/aas/schunk/pgn-plus-p-64-1}

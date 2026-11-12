@@ -23,6 +23,37 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent
 
+
+def pick_preferred_ip(candidates):
+    """Pick a LAN-facing address instead of Docker bridge / loopback entries."""
+    if not candidates:
+        raise ValueError("No candidate IP addresses were provided")
+
+    def is_rejected(ip):
+        if not ip or ip == "0.0.0.0":
+            return True
+        if ip.startswith("127."):
+            return True
+        if ip.startswith("169.254."):
+            return True
+        try:
+            octets = [int(part) for part in ip.split(".")]
+        except ValueError:
+            return True
+        if len(octets) != 4:
+            return True
+        if octets[0] == 172 and 17 <= octets[1] <= 31:
+            return True
+        return False
+
+    valid = [ip for ip in (str(ip).strip() for ip in candidates) if not is_rejected(ip)]
+    if not valid:
+        return str(candidates[0]).strip()
+
+    # Prefer common LAN ranges over bridge ranges and loopback; if several valid
+    # entries remain, keep the first one in the filtered list.
+    return valid[0]
+
 TEMPLATES = [
     REPO_ROOT / "config" / "nginx" / "nginx.conf.template",
     REPO_ROOT / "config" / "basyx-infra.yml" / "basyx-infra.yml.template",
@@ -35,14 +66,40 @@ PLACEHOLDER = "__HOST_ADDRESS__"
 
 
 def detect_local_ip():
-    """Finds the IP of the interface used to reach the LAN, without depending
-    on any particular interface name (works the same on Mac/Linux/Windows)."""
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    """Find the best LAN-facing IP, skipping bridge, loopback, and link-local addresses."""
+    candidates = []
+
     try:
-        s.connect(("8.8.8.8", 80))
-        return s.getsockname()[0]
-    finally:
-        s.close()
+        # Get the host's configured IPv4 addresses in addition to the default route.
+        for family, _, _, _, sockaddr in socket.getaddrinfo(socket.gethostname(), None, type=socket.SOCK_DGRAM):
+            if family == socket.AF_INET:
+                candidates.append(sockaddr[0])
+    except socket.gaierror:
+        pass
+
+    try:
+        route = subprocess.run(
+            ["ip", "route", "get", "8.8.8.8"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if route.returncode == 0:
+            for token in route.stdout.split():
+                if token.count(".") == 3:
+                    candidates.append(token)
+    except FileNotFoundError:
+        pass
+
+    if not candidates:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            s.connect(("8.8.8.8", 80))
+            candidates.append(s.getsockname()[0])
+        finally:
+            s.close()
+
+    return pick_preferred_ip(candidates)
 
 
 def write_env(ip):
@@ -52,6 +109,28 @@ def write_env(ip):
     lines.append(f"HOST_ADDRESS={ip}")
     env_path.write_text("\n".join(lines) + "\n")
     print(f"[.env] HOST_ADDRESS={ip}")
+
+
+def write_web_ui_env(ip):
+    """Point the dpp-web-ui Vite build at the host; other settings are kept if the file exists."""
+    ui_dir = REPO_ROOT / "services" / "dpp-web-ui"
+    env_path = ui_dir / ".env"
+    source = env_path if env_path.exists() else ui_dir / ".env.example"
+    if not source.exists():
+        print("[dpp-web-ui] no .env or .env.example found, skipping")
+        return
+    host_vars = {
+        "VITE_PUBLIC_API_BASE": f"https://{ip}/public",
+        "VITE_SECURED_API_BASE": f"https://{ip}",
+        "VITE_KEYCLOAK_URL": f"https://{ip}/auth",
+    }
+    lines = []
+    for line in source.read_text().splitlines():
+        key = line.split("=", 1)[0].strip()
+        lines.append(f"{key}={host_vars.pop(key)}" if key in host_vars else line)
+    lines.extend(f"{key}={value}" for key, value in host_vars.items())
+    env_path.write_text("\n".join(lines) + "\n")
+    print(f"[dpp-web-ui] {env_path.relative_to(REPO_ROOT)} -> https://{ip}")
 
 
 def render_templates(ip):
@@ -112,6 +191,7 @@ def main():
     print(f"Using IP: {ip}")
 
     write_env(ip)
+    write_web_ui_env(ip)
     render_templates(ip)
     ensure_cert(ip)
 
