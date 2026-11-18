@@ -20,6 +20,16 @@ server {
     ssl_protocols       TLSv1.2 TLSv1.3;
     ssl_ciphers         HIGH:!aNULL:!MD5;
 
+    # MQTT over WebSocket (wss://<host>/mqtt)
+    location /mqtt {
+        proxy_pass         http://mqtt-broker:9001;
+        proxy_http_version 1.1;
+        proxy_set_header   Upgrade    $http_upgrade;
+        proxy_set_header   Connection "Upgrade";
+        proxy_set_header   Host       $host;
+        proxy_read_timeout 3600s;
+    }
+
     # React AAS DPP frontend
     location / {
         proxy_pass         https://dpp-web-ui:443;
